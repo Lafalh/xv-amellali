@@ -389,10 +389,8 @@ a{color:inherit;}
 .padrino-y{ font-family:var(--script); color:var(--oro-texto); font-size:1.8rem; line-height:1.2; }
 
 /* ============================================================
-   8. VESTIMENTA + COLOR RESERVADO
+   8. COLOR RESERVADO
    ============================================================ */
-.vestimenta-titulo{ font-family:var(--texto); font-weight:600; font-size:1.6rem; margin-top:8px; }
-.vestimenta-texto{ font-style:italic; margin-top:4px; }
 .muestra-rosa{
   display:block; width:58px; height:58px; margin:4px auto 12px; border-radius:50%;
   background:var(--vino); border:2px solid var(--oro); position:relative;
@@ -506,6 +504,11 @@ a{color:inherit;}
 @media (prefers-reduced-motion: reduce){
   .cta-confirmar, .cta-en-pagina, .flotante-confirmar:not(.oculto), #btn-abrir, #btn-abrir::after, .flotante-confirmar::before{ animation:none !important; }
 }
+
+/* -------- reproductor de YouTube invisible (música de fondo) -------- */
+.yt-oculto{ position:fixed; left:-400px; bottom:0; width:200px; height:200px; opacity:0; pointer-events:none; overflow:hidden; }
+/* el botón de música sube para no chocar con el botón flotante de confirmar */
+.musica-btn{ bottom:86px !important; border:1px solid var(--oro) !important; }
 </style>
 </head>
 <body class="cerrada">
@@ -600,15 +603,8 @@ a{color:inherit;}
     </div>
   </section>
 
-  <!-- VESTIMENTA + COLOR RESERVADO -->
+  <!-- COLOR RESERVADO (sin dress code: lo pidió la clienta) -->
   <section class="seccion envoltura">
-    <div class="tarjeta centro reveal">
-      <div class="grabado" data-grabado="abanico"></div>
-      <h2 class="titulo-seccion">Vestimenta</h2>
-      <p class="vestimenta-titulo" id="txt-vestimenta-titulo"></p>
-      <div class="divisor" data-divisor></div>
-      <p class="vestimenta-texto" id="txt-vestimenta-texto"></p>
-    </div>
     <div class="tarjeta centro reveal">
       <span class="muestra-rosa" aria-hidden="true"></span>
       <h2 class="titulo-seccion" style="font-size:1.6rem;">Color reservado</h2>
@@ -696,6 +692,7 @@ a{color:inherit;}
 <a class="cta-confirmar flotante-confirmar oculto" id="btn-flotante" href="#seccion-rsvp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>¡Confirma tu asistencia!</span></a>
 <button class="musica-btn" id="btn-musica" style="display:none;" aria-label="Activar música">♪</button>
 <audio id="audio-musica" loop></audio>
+<div class="yt-oculto" aria-hidden="true"><div id="yt-musica"></div></div>
 
 <script>
 /* ================================================================
@@ -756,8 +753,6 @@ const CONFIG = {
     { hora: "2:00 am",  titulo: "Fin de la fiesta",                  lugar: "",          icono: "luna" }
   ],
 
-  vestimentaTitulo: "Formal",
-  vestimentaTexto: "Te espero con tu mejor atuendo para una noche de época.",
   colorReservado: "El color <strong>rosa</strong> está reservado para la quinceañera. ¡Gracias por elegir otro tono!",
 
   fechaLimiteConfirmar: "— Antes del 24 de octubre —",
@@ -777,7 +772,12 @@ const CONFIG = {
   urlConfirmaciones: "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT",
 
   // Música de fondo (opcional). Deja "" para no mostrar el botón de música.
-  musicaURL: ""
+  musicaURL: "",
+  // Canción de YouTube: el id del video (lo que va después de youtu.be/ o watch?v=).
+  // Tiene prioridad sobre musicaURL. Deja "" para no poner música de YouTube.
+  musicaYouTube: "DF3XjEhJ40Y",   // Indila – Love Story (pedida por la clienta)
+  musicaInicioSeg: 0,             // segundo en el que empieza la canción
+  musicaVolumen: 70               // 0 a 100
 };
 
 
@@ -1088,9 +1088,7 @@ function pintarContenido(){
     .map(n => `<p class="padrino-nombre">${n}</p>`)
     .join(`<p class="padrino-y">y</p>`);
 
-  // Vestimenta
-  $("txt-vestimenta-titulo").textContent = CONFIG.vestimentaTitulo;
-  $("txt-vestimenta-texto").textContent = CONFIG.vestimentaTexto;
+  // Color reservado
   $("txt-color-reservado").innerHTML = CONFIG.colorReservado;
 
   $("txt-fecha-limite").textContent = CONFIG.fechaLimiteConfirmar;
@@ -1219,10 +1217,7 @@ function iniciarPortada(){
     if (abierto) return;
     abierto = true;
     $("portada").classList.add("abriendo");
-    if (CONFIG.musicaURL) {
-      $("audio-musica").play().catch(()=>{});
-      $("btn-musica").textContent = "❚❚";
-    }
+    reproducirMusica();
     setTimeout(() => {
       $("portada").classList.add("oculta");
       document.body.classList.remove("cerrada");
@@ -1234,16 +1229,72 @@ function iniciarPortada(){
   $("sobre").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrir(); } });
 }
 
-/* ---------- Música ---------- */
+/* ---------- Música ----------
+   Dos opciones: un archivo de audio (CONFIG.musicaURL) o una canción de
+   YouTube (CONFIG.musicaYouTube = id del video), que se reproduce con un
+   reproductor de YouTube invisible. Los navegadores solo dejan sonar música
+   después de que la persona toca algo, por eso arranca al abrir la invitación;
+   el botón ♪ de la esquina la pausa o la reanuda. */
+let reproductorYT = null, ytListo = false, musicaPendiente = false;
+
+function musicaSonando(){
+  if (CONFIG.musicaYouTube) return ytListo && reproductorYT.getPlayerState() === 1;
+  return !$("audio-musica").paused;
+}
+function reproducirMusica(){
+  if (CONFIG.musicaYouTube){
+    if (ytListo) reproductorYT.playVideo();
+    else musicaPendiente = true;   // el reproductor aún carga: suena en cuanto esté listo
+  } else if (CONFIG.musicaURL){
+    $("audio-musica").play().catch(()=>{});
+  } else return;
+  $("btn-musica").textContent = "❚❚";
+}
+function pausarMusica(){
+  musicaPendiente = false;
+  if (CONFIG.musicaYouTube){ if (ytListo) reproductorYT.pauseVideo(); }
+  else $("audio-musica").pause();
+  $("btn-musica").textContent = "♪";
+}
+
 function iniciarMusica(){
-  if (!CONFIG.musicaURL) return;
-  $("audio-musica").src = CONFIG.musicaURL;
+  if (!CONFIG.musicaURL && !CONFIG.musicaYouTube) return;
   $("btn-musica").style.display = "flex";
-  $("btn-musica").addEventListener("click", () => {
-    const audio = $("audio-musica");
-    if (audio.paused) { audio.play(); $("btn-musica").textContent = "❚❚"; }
-    else { audio.pause(); $("btn-musica").textContent = "♪"; }
-  });
+  $("btn-musica").addEventListener("click", () => (musicaSonando() || musicaPendiente) ? pausarMusica() : reproducirMusica());
+
+  if (!CONFIG.musicaYouTube){
+    $("audio-musica").src = CONFIG.musicaURL;
+    return;
+  }
+  window.onYouTubeIframeAPIReady = () => {
+    reproductorYT = new YT.Player("yt-musica", {
+      width: 200, height: 200,
+      videoId: CONFIG.musicaYouTube,
+      // playlist = el mismo video para que se repita en bucle
+      playerVars: { controls: 0, loop: 1, playlist: CONFIG.musicaYouTube, playsinline: 1, rel: 0, start: CONFIG.musicaInicioSeg || 0 },
+      events: {
+        onReady: () => {
+          ytListo = true;
+          reproductorYT.setVolume(CONFIG.musicaVolumen || 70);
+          if (musicaPendiente){
+            musicaPendiente = false;
+            reproductorYT.playVideo();
+            // si el navegador no la dejó arrancar sola, el botón queda listo para tocarlo
+            setTimeout(() => { if (!musicaSonando()) $("btn-musica").textContent = "♪"; }, 1500);
+          }
+        },
+        onStateChange: (e) => {
+          if (e.data === 1) $("btn-musica").textContent = "❚❚";
+          if (e.data === 2) $("btn-musica").textContent = "♪";
+        },
+        // video borrado o con inserción bloqueada: se esconde el botón
+        onError: () => { $("btn-musica").style.display = "none"; }
+      }
+    });
+  };
+  const script = document.createElement("script");
+  script.src = "https://www.youtube.com/iframe_api";
+  document.head.appendChild(script);
 }
 
 /* ---------- Formulario de confirmación (RSVP) ----------

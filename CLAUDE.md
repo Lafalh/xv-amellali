@@ -15,6 +15,11 @@ misma estructura, mismo bloque `CONFIG`, mismo backend de Apps Script.
   02:00 Fin de la fiesta
 - **Confirmar antes del:** 24 de octubre
 - **Color rosa reservado** para la quinceañera (va en la invitación).
+- **Sin código de vestimenta** (la clienta pidió quitar "Formal"); solo queda el aviso del color reservado.
+- **Música de fondo:** Indila – *Love Story* (https://youtu.be/DF3XjEhJ40Y), con un reproductor de
+  YouTube invisible (`CONFIG.musicaYouTube`, `musicaInicioSeg`, `musicaVolumen`). Arranca al tocar
+  "Abrir invitación" (los navegadores no dejan sonar música antes de un toque); el botón ♪ la pausa.
+  No se descarga el audio: se usa el video oficial embebido.
 
 ## Reglas de la clienta
 
