@@ -218,6 +218,55 @@ h2, h3{ color:var(--titulo); }
 .pestana{ background:var(--blanco); }
 .pestana.activa{ background:var(--titulo); border-color:var(--titulo); }
 .tarjeta-lugar iframe{ border-radius:10px; }
+
+/* ============================================================
+   MEJORAS UX (guías ui-ux-pro-max) — comunes a los paneles
+   ============================================================ */
+:focus-visible{ outline:2px solid var(--titulo); outline-offset:2px; }
+a, button, select, .chip, .pestana{ -webkit-tap-highlight-color:transparent; }
+.ico{ width:17px; height:17px; flex:0 0 auto; }
+.boton{ display:inline-flex !important; align-items:center; justify-content:center; gap:8px;
+        min-height:40px; cursor:pointer; transition:background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.boton:active{ transform:translateY(1px); }
+.boton[disabled]{ opacity:.5; cursor:not-allowed; }
+.nav-sitio a{ display:flex; align-items:center; justify-content:center; min-height:48px; font-size:.7rem !important; letter-spacing:.1em !important; }
+/* letras de apoyo nunca menores a ~12px */
+.lbl, .dato .lbl, .resumen .lbl{ font-size:.72rem !important; letter-spacing:.06em !important; }
+/* carga */
+.spinner{ display:inline-block; width:18px; height:18px; margin-right:10px; vertical-align:-4px;
+          border:2px solid var(--pergamino-2); border-top-color:var(--titulo); border-radius:50%; animation:girar .8s linear infinite; }
+@keyframes girar{ to{ transform:rotate(360deg); } }
+/* avisos breves (toast) */
+.toast{ position:fixed; left:50%; bottom:22px; transform:translate(-50%, 20px); z-index:100;
+        background:var(--tinta); color:#fff; padding:12px 20px; border-radius:999px; font-size:.9rem;
+        box-shadow:0 12px 30px -10px rgba(91,58,65,.6); opacity:0; pointer-events:none;
+        transition:opacity .25s ease, transform .25s ease; max-width:calc(100% - 32px); text-align:center; }
+.toast.ver{ opacity:1; transform:translate(-50%, 0); }
+@media (pointer:coarse){
+  .boton, .chip, .pestana{ min-height:44px; }
+  .chip{ display:inline-flex !important; align-items:center; padding:0 16px !important; }
+}
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+}
+
+.tarjeta{ text-align:center; }
+.tarjeta h3{ font-size:1.35rem !important; }
+.resumen-num{ justify-content:center; }
+.mesas-grandes{ display:flex; flex-wrap:wrap; gap:14px; justify-content:center; margin-top:6px; }
+.mesa-grande{ display:flex; flex-direction:column; align-items:center; justify-content:center;
+              width:150px; height:150px; border-radius:50%;
+              background:radial-gradient(circle at 50% 35%, #FFFFFF 0%, #FDF0F3 70%);
+              border:3px solid var(--oro); outline:1px solid var(--oro); outline-offset:4px;
+              box-shadow:0 14px 30px -16px rgba(150,80,100,.6); }
+.mg-etq{ font-family:var(--texto); font-size:.72rem; letter-spacing:.18em; text-transform:uppercase; color:var(--rosa-viejo); }
+.mg-num{ font-family:var(--capitular); font-weight:700; font-size:3.6rem; line-height:1; color:var(--titulo); }
+.mg-num--texto{ font-size:1.05rem; line-height:1.2; padding:6px 10px; }
+.mg-pers{ font-size:.8rem; color:var(--tinta); opacity:.8; margin-top:2px; }
+.mesa-pendiente{ display:flex; gap:12px; align-items:flex-start; text-align:left; background:#FDF0F3; border:1px solid var(--pergamino-2);
+                 border-radius:14px; padding:14px 16px; margin-top:6px; color:var(--tinta); line-height:1.45; font-size:.92rem; }
+.mesa-pendiente .ico{ width:22px; height:22px; color:var(--titulo); margin-top:2px; }
+.nota-pendiente{ text-align:center; }
 </style>
 </head>
 <body>
@@ -260,7 +309,7 @@ const CONFIG = {
     <div class="divisor"><svg viewBox="0 0 160 30" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1" stroke-linecap="round"><path d="M4 15 H54"/><path d="M106 15 H156"/><path d="M54 15 c6 0 10 -8 4 -10 c-4 -1 -6 4 -2 5"/><path d="M54 15 c6 0 10 8 4 10 c-4 1 -6 -4 -2 -5"/><path d="M106 15 c-6 0 -10 -8 -4 -10 c4 -1 6 4 2 5"/><path d="M106 15 c-6 0 -10 8 -4 10 c4 1 6 -4 2 -5"/><path d="M80 6 L88 15 L80 24 L72 15 Z" fill="currentColor"/><circle cx="66" cy="15" r="1.6" fill="currentColor"/><circle cx="94" cy="15" r="1.6" fill="currentColor"/></svg></div>
   </div>
 
-  <div id="estado" class="estado oculto"></div>
+  <div id="estado" class="estado oculto" role="status" aria-live="polite"></div>
 
   <div id="contenido" class="contenido-flex oculto">
 
@@ -271,7 +320,7 @@ const CONFIG = {
           <p class="rol">Tu confirmación</p>
           <h3 id="txt-resumen-nombre"></h3>
           <div class="resumen-num">
-            <div><div class="num" id="num-personas"></div><div class="lbl">Personas</div></div>
+            <div><div class="num" id="num-personas"></div><div class="lbl" id="lbl-personas">Personas</div></div>
           </div>
           <div id="cont-mesas"></div>
           <p class="nota-pendiente oculto" id="nota-pendiente"></p>
@@ -331,7 +380,7 @@ function normalizar(t){
   return (t||"").trim().toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
 }
 function mostrarEstado(msg){
-  $("estado").innerHTML = msg;
+  $("estado").innerHTML = (msg.endsWith("…") ? '<span class="spinner" aria-hidden="true"></span>' : "") + msg;
   $("estado").classList.remove("oculto");
   $("contenido").classList.add("oculto");
 }
@@ -445,15 +494,27 @@ function pintarConfirmacion(nombreMostrado, grupos, croquis){
   $("txt-nombre-invitado").textContent = nombreMostrado;
   $("txt-resumen-nombre").textContent = nombreMostrado;
   $("num-personas").textContent = total;
+  const g0 = grupos[0] || {};
+  if (grupos.length === 1 && g0.adultos != null){
+    $("lbl-personas").textContent = `Personas · ${g0.adultos} adulto${g0.adultos===1?"":"s"}${g0.ninos ? ` y ${g0.ninos} niño${g0.ninos===1?"":"s"}` : ""}`;
+  }
 
   if (!mesaIds.length){
-    $("cont-mesas").innerHTML = `<p class="nota-pendiente">Tu mesa todavía no ha sido asignada — en cuanto esté lista te avisaremos por aquí mismo.</p>`;
+    $("cont-mesas").innerHTML = `<div class="mesa-pendiente"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <p><strong>Tu mesa todavía no está asignada.</strong><br>Vuelve a abrir este mismo link unos días antes del evento: aquí aparecerá tu lugar.</p></div>`;
   } else {
     const mesaPorId = (id) => croquis.mesas.find(m => m.id === id);
-    $("cont-mesas").innerHTML = mesaIds.map(mid => {
+    // la mesa es lo más importante de esta página: va en grande
+    $("cont-mesas").innerHTML = `<div class="mesas-grandes">${mesaIds.map(mid => {
       const m = mesaPorId(mid);
-      return `<span class="pastilla-mesa">Mesa <span class="n">${esc(m ? m.numero : "?")}</span> · ${porMesa[mid]} persona${porMesa[mid]===1?"":"s"}</span>`;
-    }).join("");
+      const num = m ? m.numero : "?";
+      const esTexto = isNaN(Number(num));
+      return `<div class="mesa-grande">
+        <span class="mg-etq">${mesaIds.length > 1 ? "Mesa" : "Tu mesa"}</span>
+        <span class="mg-num ${esTexto ? "mg-num--texto" : ""}">${esc(num)}</span>
+        <span class="mg-pers">${porMesa[mid]} persona${porMesa[mid]===1?"":"s"}</span>
+      </div>`;
+    }).join("")}</div>`;
     if (asignados < total){
       const nota = $("nota-pendiente");
       nota.textContent = `${total - asignados} persona(s) de tu grupo aún no tienen mesa asignada.`;
@@ -487,7 +548,7 @@ async function cargarInvitado(criterio){
       return;
     }
     const croquis = Object.assign({ mesas: [], asign: {}, grupos: [] }, (dc.ok && dc.croquis) || {});
-    const todos = di.invitados.map(i => ({ id: i.id, nombre: i.nombre, total: i.total }))
+    const todos = di.invitados.map(i => ({ id: i.id, nombre: i.nombre, total: i.total, adultos: i.adultos, ninos: i.ninos }))
       .concat((croquis.grupos || []).filter(g => g.origen === "manual"));
     const grupos = buscarGrupos({ grupos: todos }, criterio);
     if (!grupos.length){

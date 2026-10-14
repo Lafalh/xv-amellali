@@ -82,6 +82,15 @@ se ligaba por el texto del nombre):
 | `confirmacion.html` | Panel **Invitados**: todos con su mesa, filtros (sin mesa / posibles duplicados), Vista previa, Copiar link, WhatsApp, Eliminar. |
 | `mi-confirmacion.html` | Lo que ve cada invitado con su link (`?id=ID`; `?invitado=Nombre` sigue funcionando): su mesa, Misa y Recepción. |
 
+Mejoras de UI/UX (guías de la habilidad ui-ux-pro-max), bloque **"MEJORAS UX"** al final del
+`<style>` de cada panel: foco visible, objetivos táctiles ≥44px en celular, letras de apoyo ≥12px,
+spinner de carga con `aria-live`, avisos breves (toast) al copiar/eliminar, íconos SVG (no emoji).
+Por panel: dedicatorias con cifras en tarjetitas, buscador y la tabla convertida en tarjetas en celular;
+Invitados con WhatsApp como acción principal, vista previa y eliminar como íconos (eliminar aparte, con
+confirmación), página que se desplaza normal en celular con buscador fijo; croquis con botones en una
+fila deslizable (Guardar primero); mi-confirmacion con el **número de mesa en grande** (medallón) y
+estado "pendiente" claro.
+
 Los cuatro llevan al final del `<style>` un bloque **"TEMA XV AÑOS"** que sobreescribe los
 colores/fuentes de la boda (rosa baby, dorado, Cinzel Decorative, damasco, puntos laterales,
 botones píldora). Para cambiar el look de los paneles, editar ese bloque.

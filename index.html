@@ -213,6 +213,73 @@ h2, h3{ color:var(--titulo); }
 .tabla-confirmaciones{ max-width:760px; background:var(--blanco); border-radius:14px; overflow:hidden; box-shadow:var(--sombra); }
 .tabla-confirmaciones th{ background:var(--vino); color:var(--tinta); }
 .btn-flecha{ border-color:var(--oro); }
+
+/* ============================================================
+   MEJORAS UX (guías ui-ux-pro-max) — comunes a los paneles
+   ============================================================ */
+:focus-visible{ outline:2px solid var(--titulo); outline-offset:2px; }
+a, button, select, .chip, .pestana{ -webkit-tap-highlight-color:transparent; }
+.ico{ width:17px; height:17px; flex:0 0 auto; }
+.boton{ display:inline-flex !important; align-items:center; justify-content:center; gap:8px;
+        min-height:40px; cursor:pointer; transition:background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.boton:active{ transform:translateY(1px); }
+.boton[disabled]{ opacity:.5; cursor:not-allowed; }
+.nav-sitio a{ display:flex; align-items:center; justify-content:center; min-height:48px; font-size:.7rem !important; letter-spacing:.1em !important; }
+/* letras de apoyo nunca menores a ~12px */
+.lbl, .dato .lbl, .resumen .lbl{ font-size:.72rem !important; letter-spacing:.06em !important; }
+/* carga */
+.spinner{ display:inline-block; width:18px; height:18px; margin-right:10px; vertical-align:-4px;
+          border:2px solid var(--pergamino-2); border-top-color:var(--titulo); border-radius:50%; animation:girar .8s linear infinite; }
+@keyframes girar{ to{ transform:rotate(360deg); } }
+/* avisos breves (toast) */
+.toast{ position:fixed; left:50%; bottom:22px; transform:translate(-50%, 20px); z-index:100;
+        background:var(--tinta); color:#fff; padding:12px 20px; border-radius:999px; font-size:.9rem;
+        box-shadow:0 12px 30px -10px rgba(91,58,65,.6); opacity:0; pointer-events:none;
+        transition:opacity .25s ease, transform .25s ease; max-width:calc(100% - 32px); text-align:center; }
+.toast.ver{ opacity:1; transform:translate(-50%, 0); }
+@media (pointer:coarse){
+  .boton, .chip, .pestana{ min-height:44px; }
+  .chip{ display:inline-flex !important; align-items:center; padding:0 16px !important; }
+}
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+}
+
+/* encabezado más compacto: lo importante (cifras y lista) sube */
+.envoltura{ padding-top:34px !important; }
+.cabecera{ margin-bottom:22px !important; }
+.cabecera h1{ font-size:clamp(1.5rem, 6.5vw, 2.2rem) !important; }
+/* cifras en tarjetitas */
+.resumen{ display:grid !important; grid-template-columns:repeat(auto-fit, minmax(96px, 1fr)); gap:10px !important;
+          max-width:680px !important; margin:0 auto 18px !important; }
+.resumen > div{ background:var(--blanco); border:1px solid var(--pergamino-2); border-radius:14px; padding:12px 6px;
+                box-shadow:0 8px 20px -16px rgba(150,80,100,.6); }
+.resumen .num{ font-size:1.6rem !important; line-height:1.1; }
+.resumen .lbl{ opacity:.85 !important; color:var(--rosa-viejo); }
+.fila-botones{ margin-bottom:6px !important; }
+.ultima-act{ text-align:center; font-size:.78rem; color:var(--rosa-viejo); min-height:1.2em; margin-bottom:30px; }
+.estado{ font-size:.95rem; }
+/* buscador de la tabla */
+.seccion-titulo{ display:flex; flex-direction:column; align-items:center; gap:12px; }
+.buscador{ display:flex; align-items:center; gap:8px; width:100%; max-width:420px; padding:0 14px; min-height:44px;
+           background:var(--blanco); border:1px solid var(--pergamino-2); border-radius:999px; color:var(--rosa-viejo); }
+.buscador input{ flex:1; border:none; background:transparent; font-family:var(--texto); font-size:.95rem; color:var(--tinta); min-height:42px; }
+.buscador input:focus{ outline:none; }
+.buscador:focus-within{ border-color:var(--titulo); box-shadow:0 0 0 3px rgba(166,77,105,.15); }
+.tabla-confirmaciones td{ font-size:.9rem; }
+/* en celular la tabla se vuelve tarjetas (nada de columnas apretadas) */
+@media (max-width:640px){
+  .tabla-confirmaciones{ background:transparent !important; box-shadow:none !important; border-radius:0 !important; }
+  .tabla-confirmaciones tr:first-child{ display:none; }
+  .tabla-confirmaciones tr{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px 10px; margin-bottom:12px;
+                            background:var(--blanco); border:1px solid var(--pergamino-2); border-radius:14px; padding:14px 16px;
+                            box-shadow:0 8px 20px -16px rgba(150,80,100,.6); }
+  .tabla-confirmaciones td{ border:none !important; padding:0 !important; font-size:.95rem; }
+  .tabla-confirmaciones td::before{ content:attr(data-label); display:block; font-size:.7rem; letter-spacing:.06em;
+                                    text-transform:uppercase; color:var(--rosa-viejo); margin-bottom:2px; }
+  .tabla-confirmaciones .td-nombre{ grid-column:1 / -1; font-weight:600; font-size:1.05rem; }
+  .tabla-confirmaciones .td-tel{ grid-column:span 2; }
+}
 </style>
 </head>
 <body>
@@ -245,14 +312,16 @@ const CONFIG = {
   <div class="resumen" id="resumen"></div>
 
   <div class="fila-botones">
-    <button class="boton" id="btn-actualizar">Actualizar</button>
+    <button class="boton" id="btn-actualizar"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/></svg>Actualizar</button>
   </div>
+  <p class="ultima-act" id="ultima-act"></p>
 
-  <div id="estado" class="estado"></div>
+  <div id="estado" class="estado" role="status" aria-live="polite"></div>
   <div id="cont-dedicatorias"></div>
 
   <div class="seccion-titulo">
-    <h2>Lista de confirmaciones</h2>
+    <h2>Lista de invitados</h2>
+    <label class="buscador"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="search" id="buscar-tabla" placeholder="Buscar por nombre o teléfono…" aria-label="Buscar invitado"></label>
   </div>
   <div style="overflow-x:auto;">
     <table class="tabla-confirmaciones" id="tabla-confirmaciones"></table>
@@ -279,7 +348,7 @@ function escaparHTML(texto){
 }
 
 async function cargarDatos(){
-  $("estado").textContent = "Cargando...";
+  $("estado").innerHTML = '<span class="spinner" aria-hidden="true"></span>Cargando…';
   $("cont-dedicatorias").innerHTML = "";
   $("tabla-confirmaciones").innerHTML = "";
   $("resumen").innerHTML = "";
@@ -314,6 +383,7 @@ async function cargarDatos(){
     }
 
     $("estado").textContent = "";
+    $("ultima-act").textContent = "Actualizado a las " + new Date().toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
     // Cada invitado de la pestaña "Invitados" es una confirmación (se registran al confirmar)
     pintarDatos((datos.invitados || []).map(i => Object.assign({}, i, { pases: i.total, asiste: "Sí" })));
   } catch (err) {
@@ -485,12 +555,12 @@ function pintarDatos(confirmaciones){
       <tr><th>Nombre</th><th>WhatsApp</th><th>Adultos</th><th>Niños</th><th>Total</th><th>Fecha</th></tr>
       ${confirmaciones.map(c => `
         <tr>
-          <td>${escaparHTML(c.nombre)}</td>
-          <td>${escaparHTML(c.telefono) || "—"}</td>
-          <td>${c.adultos || "—"}</td>
-          <td>${c.ninos || 0}</td>
-          <td><strong>${c.pases}</strong></td>
-          <td>${formatearFecha(c.fecha)}</td>
+          <td class="td-nombre">${escaparHTML(c.nombre)}</td>
+          <td class="td-tel" data-label="WhatsApp">${escaparHTML(c.telefono) || "—"}</td>
+          <td data-label="Adultos">${c.adultos || "—"}</td>
+          <td data-label="Niños">${c.ninos || 0}</td>
+          <td data-label="Total"><strong>${c.pases}</strong></td>
+          <td data-label="Confirmó">${formatearFecha(c.fecha)}</td>
         </tr>
       `).join("")}
     `;
@@ -498,6 +568,14 @@ function pintarDatos(confirmaciones){
 }
 
 $("btn-actualizar").addEventListener("click", cargarDatos);
+$("buscar-tabla").addEventListener("input", e => {
+  const q = e.target.value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  document.querySelectorAll("#tabla-confirmaciones tr").forEach((tr, i) => {
+    if (i === 0) return;   // encabezado
+    const t = tr.textContent.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    tr.style.display = !q || t.includes(q) ? "" : "none";
+  });
+});
 
 cargarDatos();
 </script>

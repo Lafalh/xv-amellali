@@ -141,6 +141,80 @@ header h1{ font-size:1.5rem; }
 .mensaje-fila{ font-family:var(--display); font-style:italic; font-size:.95rem; margin-top:6px; opacity:.85; }
 .boton--peligro{ border-color:#D9A3A0 !important; color:var(--alerta) !important; }
 .boton--peligro:hover{ background:var(--alerta) !important; color:#fff !important; }
+
+/* ============================================================
+   MEJORAS UX (guías ui-ux-pro-max) — comunes a los paneles
+   ============================================================ */
+:focus-visible{ outline:2px solid var(--titulo); outline-offset:2px; }
+a, button, select, .chip, .pestana{ -webkit-tap-highlight-color:transparent; }
+.ico{ width:17px; height:17px; flex:0 0 auto; }
+.boton{ display:inline-flex !important; align-items:center; justify-content:center; gap:8px;
+        min-height:40px; cursor:pointer; transition:background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.boton:active{ transform:translateY(1px); }
+.boton[disabled]{ opacity:.5; cursor:not-allowed; }
+.nav-sitio a{ display:flex; align-items:center; justify-content:center; min-height:48px; font-size:.7rem !important; letter-spacing:.1em !important; }
+/* letras de apoyo nunca menores a ~12px */
+.lbl, .dato .lbl, .resumen .lbl{ font-size:.72rem !important; letter-spacing:.06em !important; }
+/* carga */
+.spinner{ display:inline-block; width:18px; height:18px; margin-right:10px; vertical-align:-4px;
+          border:2px solid var(--pergamino-2); border-top-color:var(--titulo); border-radius:50%; animation:girar .8s linear infinite; }
+@keyframes girar{ to{ transform:rotate(360deg); } }
+/* avisos breves (toast) */
+.toast{ position:fixed; left:50%; bottom:22px; transform:translate(-50%, 20px); z-index:100;
+        background:var(--tinta); color:#fff; padding:12px 20px; border-radius:999px; font-size:.9rem;
+        box-shadow:0 12px 30px -10px rgba(91,58,65,.6); opacity:0; pointer-events:none;
+        transition:opacity .25s ease, transform .25s ease; max-width:calc(100% - 32px); text-align:center; }
+.toast.ver{ opacity:1; transform:translate(-50%, 0); }
+@media (pointer:coarse){
+  .boton, .chip, .pestana{ min-height:44px; }
+  .chip{ display:inline-flex !important; align-items:center; padding:0 16px !important; }
+}
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+}
+
+/* encabezado y cifras compactas */
+header{ padding:14px 20px 12px !important; align-items:center !important; }
+header h1{ font-size:1.45rem !important; }
+.resumen{ display:grid !important; grid-template-columns:repeat(6, 1fr); gap:8px !important; padding:12px 20px !important; }
+.dato{ border:1px solid var(--pergamino-2) !important; border-radius:12px; margin:0 !important; padding:8px 6px !important; text-align:center; background:var(--pergamino); }
+.dato .num{ font-size:1.25rem !important; }
+.dato.alerta{ background:#FDECEA !important; border-color:#F3C6C2 !important; }
+.dato.alerta .num, .dato.alerta .lbl{ color:#A3352F !important; }
+.barra{ padding:12px 20px !important; }
+.buscador{ display:flex; align-items:center; gap:8px; width:100%; max-width:460px; padding:0 14px; min-height:44px;
+           background:var(--blanco); border:1px solid var(--pergamino-2); border-radius:999px; color:var(--rosa-viejo); }
+.buscador input{ flex:1; border:none !important; background:transparent !important; font-family:inherit; font-size:.95rem; color:var(--tinta); min-height:42px; padding:0 !important; max-width:none !important; }
+.buscador input:focus{ outline:none; }
+.buscador:focus-within{ border-color:var(--titulo); box-shadow:0 0 0 3px rgba(166,77,105,.15); }
+/* tarjeta de invitado */
+.fila-invitado{ gap:8px !important; padding:16px 16px 14px !important; }
+.fi-cabeza{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+.fila-invitado .nombre{ font-family:var(--texto); font-size:1.02rem !important; font-weight:600; color:var(--tinta); line-height:1.3; margin:0; padding-top:10px; }
+.fila-invitado .cont{ display:flex; align-items:center; gap:8px; font-size:.85rem !important; color:var(--tinta) !important; opacity:.85; margin:0 !important; }
+.fila-invitado .cont .ico{ color:var(--rosa-viejo); width:16px; height:16px; }
+.fi-mesas .fila-mesas{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.badge{ display:inline-flex; align-items:center; font-size:.72rem; font-weight:500; letter-spacing:.03em; padding:4px 10px; border-radius:999px; }
+.badge--aviso{ background:#FDECEA; color:#A3352F; }
+.acciones-fila{ display:flex !important; flex-wrap:wrap; gap:8px !important; align-items:center; padding-top:6px !important; border-top:1px dashed var(--pergamino-2); margin-top:4px !important; }
+.acciones-fila{ flex-wrap:nowrap !important; }
+.acciones-fila .boton{ flex:1 1 0; min-width:0; padding-left:10px !important; padding-right:10px !important; white-space:nowrap; }
+@media (min-width:680px){ .lista-invitados{ grid-template-columns:repeat(auto-fill, minmax(330px, 1fr)) !important; } }
+.btn-icono{ display:inline-flex; align-items:center; justify-content:center; flex:0 0 44px; width:44px; height:44px; border-radius:50%;
+            border:1px solid var(--pergamino-2); background:var(--blanco); color:var(--rosa-viejo); cursor:pointer; transition:background .2s, color .2s, border-color .2s; }
+.btn-icono:hover{ background:var(--vino); color:var(--titulo); border-color:var(--vino); }
+.btn-icono--peligro{ border-color:transparent; background:transparent; color:#B3413C; }
+.btn-icono--peligro:hover{ background:#FDECEA; color:#A3352F; border-color:#F3C6C2; }
+.estado p{ margin:0; }
+/* celular: la página se desplaza normal y el buscador se queda arriba */
+@media (max-width:679px){
+  html, body{ height:auto !important; }
+  body{ display:block !important; overflow:auto !important; }
+  .resumen{ grid-template-columns:repeat(3, 1fr); padding:10px 16px !important; }
+  header{ padding:12px 16px 10px !important; }
+  .barra{ position:sticky; top:0; z-index:10; padding:10px 16px !important; box-shadow:0 8px 16px -14px rgba(91,58,65,.5); }
+  .lista-invitados{ overflow:visible !important; padding:14px 16px 40px !important; }
+}
 </style>
 </head>
 <body>
@@ -162,26 +236,36 @@ const CONFIG = {
 
 <header>
   <div>
-    <p class="sub">Panel privado · un invitado = una confirmación</p>
+    <p class="sub">Panel privado</p>
     <h1>Invitados</h1>
   </div>
   <div class="acciones">
-    <a class="boton" href="invitacion.html" target="_blank" rel="noopener" title="Abrir la invitación tal como la ven los invitados">Ver invitación</a>
+    <a class="boton" href="invitacion.html" target="_blank" rel="noopener" title="Abrir la invitación tal como la ven los invitados"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>Ver invitación</a>
   </div>
 </header>
 
 <div class="resumen" id="resumen"></div>
 
 <div class="barra">
-  <input type="text" id="buscar" placeholder="Buscar invitado o teléfono…">
+  <label class="buscador"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="search" id="buscar" placeholder="Buscar invitado o teléfono…" aria-label="Buscar invitado o teléfono"></label>
   <div class="filtros" id="filtros"></div>
 </div>
 
-<div id="estado" class="estado">Cargando...</div>
+<div id="estado" class="estado" role="status" aria-live="polite">Cargando...</div>
 <div class="lista-invitados" id="lista"></div>
 
 <script>
 const $ = (id) => document.getElementById(id);
+
+const ICONOS = {"telefono": "<svg class=\"ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z\"/></svg>", "personas": "<svg class=\"ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.9\"/><path d=\"M16 3.1a4 4 0 0 1 0 7.8\"/></svg>", "basura": "<svg class=\"ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3 6h18\"/><path d=\"M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6\"/><path d=\"M10 11v6M14 11v6\"/><path d=\"M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2\"/></svg>", "link": "<svg class=\"ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7\"/><path d=\"M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7\"/></svg>", "ojo": "<svg class=\"ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/></svg>", "chat": "<svg class=\"ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z\"/></svg>"};
+
+/* aviso breve abajo (confirma que una acción sí se hizo) */
+function mostrarToast(msg){
+  let t = document.getElementById("toast");
+  if (!t){ t = document.createElement("div"); t.id = "toast"; t.className = "toast"; t.setAttribute("role", "status"); t.setAttribute("aria-live", "polite"); document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add("ver");
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("ver"), 2200);
+}
 
 function esc(t){ const d=document.createElement("div"); d.textContent=t||""; return d.innerHTML; }
 function normalizar(t){
@@ -250,38 +334,37 @@ function renderLista(){
     const ids = Object.keys(mapa);
     const faltan = inv.total - sentados(inv.id);
     const mesasHTML = ids.length
-      ? `<div class="fila-mesas">${ids.map(mid => `<span class="pastilla-mesa">Mesa <span class="n">${esc(numeroMesa(mid))}</span> · ${mapa[mid]}</span>`).join("")}</div>
-         ${faltan > 0 ? `<span class="pendiente">${faltan} sin mesa</span>` : ""}`
-      : `<span class="pendiente">Sin mesa asignada</span>`;
+      ? `<div class="fila-mesas">${ids.map(mid => `<span class="pastilla-mesa">Mesa <span class="n">${esc(numeroMesa(mid))}</span> · ${mapa[mid]}</span>`).join("")}
+         ${faltan > 0 ? `<span class="badge badge--aviso">${faltan} sin mesa</span>` : ""}</div>`
+      : `<span class="badge badge--aviso">Sin mesa asignada</span>`;
     const desglose = `${inv.adultos} adulto${inv.adultos===1?"":"s"}${inv.ninos ? ` · ${inv.ninos} niño${inv.ninos===1?"":"s"}` : ""}`;
     const wa = linkWhatsApp(inv);
     const dup = cuenta[normalizar(inv.nombre)] > 1;
     return `
-      <div class="fila-invitado ${dup ? "posible-dup" : ""}">
-        <div>
-          <div class="nombre">${esc(inv.nombre)}
+      <article class="fila-invitado ${dup ? "posible-dup" : ""}">
+        <div class="fi-cabeza">
+          <h3 class="nombre">${esc(inv.nombre)}
             ${inv.manual ? `<span class="etiqueta-fila">a mano</span>` : ""}
-            ${dup ? `<span class="etiqueta-fila alerta">¿duplicado?</span>` : ""}</div>
-          <div class="cont">${inv.total} persona${inv.total===1?"":"s"} · ${desglose}${inv.telefono ? ` · ☎ ${esc(inv.telefono)}` : ""}</div>
-          ${inv.mensaje ? `<div class="mensaje-fila">«${esc(inv.mensaje)}»</div>` : ""}
-          <div style="margin-top:6px;">${mesasHTML}</div>
+            ${dup ? `<span class="etiqueta-fila alerta">¿duplicado?</span>` : ""}</h3>
+          ${inv.manual ? "" : `<button class="btn-icono btn-icono--peligro" data-eliminar="${esc(inv.id)}" data-nombre="${esc(inv.nombre)}" aria-label="Eliminar a ${esc(inv.nombre)}" title="Eliminar">${ICONOS.basura}</button>`}
         </div>
+        <div class="cont">${ICONOS.personas}<span><strong>${inv.total}</strong> persona${inv.total===1?"":"s"} · ${desglose}</span></div>
+        ${inv.telefono ? `<div class="cont">${ICONOS.telefono}<span>${esc(inv.telefono)}</span></div>` : ""}
+        ${inv.mensaje ? `<div class="mensaje-fila">«${esc(inv.mensaje)}»</div>` : ""}
+        <div class="fi-mesas">${mesasHTML}</div>
         <div class="acciones-fila">
-          <a class="boton" href="${linkInvitado(inv.id)}" target="_blank" rel="noopener">Vista previa</a>
-          <button class="boton" data-copiar="${esc(inv.id)}">Copiar link</button>
-          ${wa ? `<a class="boton boton--solido" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
-          ${inv.manual ? "" : `<button class="boton boton--peligro" data-eliminar="${esc(inv.id)}" data-nombre="${esc(inv.nombre)}">Eliminar</button>`}
+          ${wa ? `<a class="boton boton--solido" href="${wa}" target="_blank" rel="noopener">${ICONOS.chat}WhatsApp</a>` : ""}
+          <button class="boton" data-copiar="${esc(inv.id)}">${ICONOS.link}Copiar link</button>
+          <a class="btn-icono" href="${linkInvitado(inv.id)}" target="_blank" rel="noopener" aria-label="Ver lo que verá ${esc(inv.nombre)}" title="Vista previa">${ICONOS.ojo}</a>
         </div>
-      </div>`;
+      </article>`;
   }).join("");
 
   $("lista").querySelectorAll("[data-copiar]").forEach(btn => {
     btn.addEventListener("click", () => {
       const url = linkInvitado(btn.dataset.copiar);
       navigator.clipboard.writeText(url).then(() => {
-        const original = btn.textContent;
-        btn.textContent = "¡Copiado!";
-        setTimeout(() => { btn.textContent = original; }, 1500);
+        mostrarToast("Link copiado: ya puedes pegarlo en WhatsApp");
       }).catch(() => { prompt("Copia este link manualmente:", url); });
     });
   });
@@ -294,7 +377,7 @@ function renderLista(){
    recuperar cambiando el Estado a "Confirmado" en Google Sheets). */
 async function eliminar(id, nombre, btn){
   if (!confirm(`¿Eliminar a "${nombre}" de la lista?\n\nÚsalo para duplicados o confirmaciones por error. Si tenía mesa, su lugar se libera la próxima vez que guardes el croquis.`)) return;
-  btn.disabled = true; btn.textContent = "Eliminando…";
+  btn.disabled = true;
   try{
     const r = await fetch(CONFIG.urlConfirmaciones, {
       method: "POST", headers: { "Content-Type": "text/plain" },
@@ -302,10 +385,11 @@ async function eliminar(id, nombre, btn){
     });
     const d = await r.json();
     if (!d.ok) throw new Error(d.error || "error");
+    mostrarToast(`Se eliminó «${nombre}»`);
     cargar();
   }catch(err){
     alert("No se pudo eliminar: " + err.message);
-    btn.disabled = false; btn.textContent = "Eliminar";
+    btn.disabled = false; btn.innerHTML = ICONOS.basura;
   }
 }
 
@@ -316,7 +400,7 @@ function renderFiltros(){
 }
 
 async function cargar(){
-  $("estado").textContent = "Cargando...";
+  $("estado").innerHTML = '<span class="spinner" aria-hidden="true"></span>Cargando…';
   $("estado").classList.remove("oculto");
   $("lista").innerHTML = "";
   $("resumen").innerHTML = "";
@@ -343,7 +427,14 @@ async function cargar(){
     const manuales = (croquisActual.grupos || []).filter(g => g.origen === "manual")
       .map(g => ({ id: g.id, nombre: g.nombre, total: g.total, adultos: g.total, ninos: 0, telefono: "", mensaje: "", manual: true }));
     invitados = di.invitados.concat(manuales).sort((a,b) => a.nombre.localeCompare(b.nombre, "es"));
-    if (!invitados.length){ $("estado").textContent = "Todavía nadie ha confirmado."; return; }
+    if (!invitados.length){
+      $("estado").innerHTML = `<p>Todavía nadie ha confirmado.</p><p style="margin:6px 0 14px;">Comparte el link de la invitación para que empiecen a registrarse.</p>
+        <button class="boton boton--solido" id="btn-copiar-invitacion">${ICONOS.link}Copiar link de la invitación</button>`;
+      $("btn-copiar-invitacion").addEventListener("click", () => {
+        navigator.clipboard.writeText(new URL("invitacion.html", location.href).href).then(() => mostrarToast("Link de la invitación copiado"));
+      });
+      return;
+    }
     $("estado").classList.add("oculto");
     renderResumen();
     renderFiltros();
