@@ -25,9 +25,13 @@ misma estructura, mismo bloque `CONFIG`, mismo backend de Apps Script.
 
 - **No debe aparecer ninguna foto de la quinceañera** ni de su vestido (el vestido es rosa).
 - **Ilustración que mandó la clienta** (quinceañera de espaldas en acuarela, rosas, mariposas,
-  medallón "Mis 15 Años"): `img/xv-ilustracion.webp` (recortada de su captura, 821×1462). Es un
-  dibujo genérico, no foto. Va en `invitacion.html` como tarjeta `.ilustracion` con la frase
-  encima, en la zona blanca de la izquierda (tamaños en `cqw`).
+  medallón "Mis 15 Años"): `img/xv-ilustracion.webp` (1232×2193). Es un dibujo genérico, no foto.
+  La original venía muy comprimida (855 px de una captura), así que: se recortó la franja gris,
+  se **borró el medallón** de la imagen (relleno con la acuarela de alrededor), se limpió el ruido
+  JPEG, se amplió 1.5x y se le dio nitidez. El medallón se **redibujó en SVG** (`SVG_MEDALLON_15`,
+  en `.il-medallon`, mismas coordenadas que el original) para que tiara, aro y "Mis 15 Años" se
+  vean nítidos. Va en `invitacion.html` como tarjeta `.ilustracion` con la frase encima, en la zona
+  blanca de la izquierda (tamaños en `cqw`).
 - Estilo: **época victoriana** con marco ovalado dorado, rosas, corazones y corona
   (según la imagen de referencia). Colores: **rosa baby + dorado + blanco**
   (al principio era rojo vino como la referencia; se cambió a petición).

@@ -358,6 +358,11 @@ a{color:inherit;}
   outline:1.5px solid var(--oro); outline-offset:-9px;
   box-shadow:var(--sombra);
 }
+/* medallón "Mis 15 Años" redibujado en SVG (nítido a cualquier tamaño).
+   Va exactamente donde estaba en la ilustración original: la imagen ya no
+   lo trae (se borró y se rellenó con la acuarela de alrededor). */
+.il-medallon{ position:absolute; left:55.18%; top:12.72%; width:31.67%; aspect-ratio:260/390; }
+.il-medallon svg{ width:100%; height:100%; overflow:visible; }
 .ilustracion-texto{
   position:absolute; left:8%; top:39%; width:56%;
   display:flex; flex-direction:column; align-items:center; text-align:center;
@@ -690,6 +695,7 @@ a{color:inherit;}
        quinceañera: es un dibujo genérico. -->
   <section class="seccion envoltura centro">
     <div class="ilustracion reveal" role="img" aria-label="Ilustración de una quinceañera de espaldas con vestido rosa, rosas y mariposas">
+      <div class="il-medallon" id="il-medallon" aria-hidden="true"></div>
       <div class="ilustracion-texto">
         <p class="il-etiqueta">Con la bendición de Dios y de mi familia</p>
         <p class="il-nombre" id="txt-nombre-ilustracion"></p>
@@ -1058,6 +1064,69 @@ const VOLUTA = (x, y, espejo) => `
   </g>`;
 
 /* ---------- Marco ovalado (referencia de la clienta), viewBox 300×440 ---------- */
+/* Medallón "Mis 15 Años" de la ilustración (viewBox 260×390, en las mismas
+   unidades que la imagen original de 821 px de ancho): tiara con arcos y
+   joyas, aro dorado, ramita de laurel, rosas y dos anillos entrelazados. */
+const PICO_TIARA = (cx, alto, ancho) => `
+  <path d="M${cx-ancho},84 Q${cx-ancho*0.55},${alto+22} ${cx},${alto} Q${cx+ancho*0.55},${alto+22} ${cx+ancho},84"
+        fill="rgba(230,200,115,.28)" stroke="url(#og15)" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M${cx-ancho*0.55},84 Q${cx-ancho*0.3},${alto+34} ${cx},${alto+16} Q${cx+ancho*0.3},${alto+34} ${cx+ancho*0.55},84"
+        fill="none" stroke="url(#og15)" stroke-width="1.2"/>
+  <circle cx="${cx}" cy="${alto-4}" r="4.2" fill="#FFFFFF" stroke="url(#og15)" stroke-width="1.4"/>`;
+const SVG_MEDALLON_15 = `<svg viewBox="0 0 260 390" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="og15" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F7E6A6"/><stop offset=".45" stop-color="#D4AE3C"/><stop offset="1" stop-color="#9C7618"/>
+    </linearGradient>
+    <linearGradient id="og15v" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F6E3A1"/><stop offset=".45" stop-color="#C9A227"/><stop offset=".75" stop-color="#9C7618"/><stop offset="1" stop-color="#E6C873"/>
+    </linearGradient>
+  </defs>
+
+  <!-- aro -->
+  <circle cx="125" cy="178" r="98" fill="rgba(255,255,255,.62)" stroke="url(#og15)" stroke-width="3.6"/>
+  <circle cx="125" cy="178" r="90" fill="none" stroke="url(#og15)" stroke-width="1"/>
+
+  <!-- ramita de laurel a la izquierda del aro -->
+  <g fill="url(#og15)">
+    <path d="M24,250 C12,214 12,170 26,132" fill="none" stroke="url(#og15)" stroke-width="2"/>
+    <ellipse cx="13" cy="232" rx="5" ry="11" transform="rotate(-30 13 232)"/>
+    <ellipse cx="26" cy="222" rx="5" ry="11" transform="rotate(35 26 222)"/>
+    <ellipse cx="9" cy="200" rx="5" ry="11" transform="rotate(-15 9 200)"/>
+    <ellipse cx="23" cy="190" rx="5" ry="11" transform="rotate(40 23 190)"/>
+    <ellipse cx="11" cy="168" rx="5" ry="11" transform="rotate(-5 11 168)"/>
+    <ellipse cx="25" cy="158" rx="5" ry="11" transform="rotate(45 25 158)"/>
+    <ellipse cx="19" cy="138" rx="4.5" ry="10" transform="rotate(15 19 138)"/>
+  </g>
+
+  <!-- tiara -->
+  ${PICO_TIARA(54, 56, 20)}${PICO_TIARA(196, 56, 20)}
+  ${PICO_TIARA(88, 34, 24)}${PICO_TIARA(162, 34, 24)}
+  ${PICO_TIARA(125, 10, 30)}
+  <path d="M30,84 Q125,100 220,84 L222,94 Q125,112 28,94 Z" fill="url(#og15v)" stroke="#8F6B17" stroke-width=".8"/>
+  <path d="M125,40 C117,52 117,62 125,70 C133,62 133,52 125,40 Z" fill="#E48AA3" stroke="url(#og15)" stroke-width="1.6"/>
+  <circle cx="88" cy="62" r="4" fill="#E48AA3"/><circle cx="162" cy="62" r="4" fill="#E48AA3"/>
+  <g fill="#FFFFFF" stroke="#C9A227" stroke-width=".8">
+    <circle cx="48" cy="92" r="2.6"/><circle cx="70" cy="96" r="2.6"/><circle cx="92" cy="99" r="2.6"/><circle cx="114" cy="101" r="2.6"/>
+    <circle cx="136" cy="101" r="2.6"/><circle cx="158" cy="99" r="2.6"/><circle cx="180" cy="96" r="2.6"/><circle cx="202" cy="92" r="2.6"/>
+  </g>
+
+  <!-- texto -->
+  <text x="72" y="150" font-family="Pinyon Script, cursive" font-size="48" fill="#A9822A">Mis</text>
+  <text x="125" y="232" text-anchor="middle" font-family="Cinzel Decorative, serif" font-weight="700" font-size="92"
+        fill="url(#og15v)" stroke="#8F6B17" stroke-width=".7">15</text>
+  <text x="204" y="270" text-anchor="end" font-family="Pinyon Script, cursive" font-size="48" fill="#A9822A">Años</text>
+
+  <!-- rosas abajo a la izquierda del aro -->
+  ${ROSA(70, 286, 2.1, -12)}${ROSA(112, 304, 1.7, 14)}${ROSA(38, 262, 1.5, 30)}${ROSA(146, 290, 1.2, -20)}
+
+  <!-- anillos entrelazados -->
+  <g fill="none" stroke="url(#og15)" stroke-width="3">
+    <circle cx="186" cy="338" r="17"/><circle cx="208" cy="338" r="17"/>
+  </g>
+  <circle cx="186" cy="321" r="3.2" fill="#FFFFFF" stroke="#C9A227" stroke-width="1"/>
+</svg>`;
+
 const SVG_MARCO = `<svg viewBox="0 0 300 440" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs>
     <linearGradient id="g-oro" x1="0" y1="0" x2="1" y2="1">
@@ -1243,6 +1312,7 @@ function pintarContenido(){
   // Frase
   $("txt-cita").textContent = CONFIG.cita;
   $("txt-nombre-ilustracion").textContent = CONFIG.nombreQuinceañera;
+  $("il-medallon").innerHTML = SVG_MEDALLON_15;
   $("txt-nombre-completo").textContent = CONFIG.nombreCompleto;
 
   // Misa y fiesta
