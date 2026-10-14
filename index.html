@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dedicatorias · XV de Amellali</title>
+<meta name="robots" content="noindex, nofollow">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Pinyon+Script&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --tinta:        #33391F;
+  --pergamino:    #FBF7EA;
+  --pergamino-2:  #F1EEE3;
+  --rosa-viejo:   #A6822C;
+  --oro:          #C9A227;
+  --blanco-calido:#FFFFFF;
+  --display: "Cormorant Garamond", serif;
+  --texto:   "Jost", sans-serif;
+  --sombra: 0 18px 40px -18px rgba(51,57,31,.35);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{
+  font-family:var(--texto);
+  background:var(--pergamino);
+  color:var(--tinta);
+  min-height:100vh;
+}
+.envoltura{ max-width:1000px; margin:0 auto; padding:60px 24px 90px; }
+h1,h2{ font-family:var(--display); font-weight:500; }
+.ojo-de-cerradura{ text-transform:uppercase; letter-spacing:.22em; font-size:.68rem; color:var(--oro); font-weight:500; }
+
+.divisor{ width:110px; height:30px; margin:16px auto 0; color:var(--oro); }
+.divisor svg{ width:100%; height:100%; }
+
+.cabecera{ text-align:center; margin-bottom:36px; max-width:640px; margin-left:auto; margin-right:auto; }
+.cabecera h1{ font-size:2.1rem; font-style:italic; margin-top:10px; }
+
+.resumen{
+  display:flex; justify-content:center; gap:32px; flex-wrap:wrap;
+  margin:8px auto 40px; text-align:center; max-width:640px;
+}
+.resumen .num{ font-family:var(--display); font-size:1.7rem; color:var(--oro); }
+.resumen .lbl{ font-size:.64rem; letter-spacing:.12em; text-transform:uppercase; opacity:.65; }
+
+.boton{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 22px; border:1px solid var(--oro); background:transparent; color:var(--tinta);
+  font-family:var(--texto); font-size:.7rem; letter-spacing:.12em; text-transform:uppercase;
+  cursor:pointer; text-decoration:none;
+}
+.boton:hover{ background:var(--oro); color:var(--blanco-calido); }
+.boton--solido{ background:var(--oro); color:var(--blanco-calido); }
+.boton--solido:hover{ background:var(--tinta); border-color:var(--tinta); }
+.fila-botones{ display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:44px; }
+
+/* -------- carta de dedicatoria -------- */
+.carta{
+  background:var(--blanco-calido);
+  border-radius:2px;
+  box-shadow:var(--sombra);
+}
+.carta .corazon{
+  width:24px; height:24px; margin:0 auto 14px; color:var(--oro); display:block;
+}
+.carta .mensaje{
+  font-family:var(--display); font-style:italic; font-size:1.08rem; line-height:1.6;
+  text-align:center; color:var(--tinta);
+}
+.carta .firma{
+  margin-top:18px; text-align:right; font-family:var(--display); font-style:italic; font-size:1.02rem;
+  color:var(--rosa-viejo);
+}
+.carta .firma .personas{
+  display:block; font-family:var(--texto); font-style:normal; font-size:.66rem;
+  letter-spacing:.06em; text-transform:uppercase; opacity:.6; margin-top:2px;
+}
+.carta .fecha{
+  display:block; text-align:center; margin-top:14px;
+  font-size:.62rem; letter-spacing:.05em; opacity:.4;
+}
+
+/* -------- carrusel tipo "álbum": varias tarjetas visibles, la del
+   centro grande y las de los lados chicas y tenues, en loop -------- */
+.carrusel{
+  display:flex; align-items:center; justify-content:center; gap:14px;
+  max-width:100%; margin:0 auto; padding:10px 0;
+}
+.carrusel-slot{
+  flex:0 0 auto;
+  transition:flex-basis .5s cubic-bezier(.4,0,.2,1), min-height .5s cubic-bezier(.4,0,.2,1), opacity .5s ease, transform .5s cubic-bezier(.4,0,.2,1);
+}
+.carrusel-slot .carta{
+  width:100%; height:100%; padding:26px 22px;
+  display:flex; flex-direction:column; justify-content:center;
+}
+/* centro: tarjeta completa. min-height (no height fija) para que si el
+   mensaje es largo la tarjeta crezca en vez de recortar el texto. */
+.carrusel-slot[data-nivel="0"]{ flex-basis:340px; min-height:430px; opacity:1; z-index:3; }
+.carrusel-slot[data-nivel="0"] .carta{ padding:40px 36px; }
+.carrusel-slot[data-nivel="0"] .mensaje{ font-size:1.22rem; }
+/* vecinos inmediatos: versión reducida */
+.carrusel-slot[data-nivel="1"]{ flex-basis:170px; min-height:260px; opacity:.75; z-index:2; }
+.carrusel-slot[data-nivel="1"] .carta{ padding:20px 16px; }
+/* extremos: solo una pista de que hay más */
+.carrusel-slot[data-nivel="2"]{ flex-basis:100px; min-height:170px; opacity:.4; z-index:1; }
+.carrusel-slot[data-nivel="2"] .carta{ padding:14px 10px; }
+
+.mini-corazon{ width:18px; height:18px; margin:0 auto 9px; color:var(--oro); }
+.mini-nombre{
+  text-align:center; font-family:var(--display); font-style:italic; font-size:.88rem;
+  color:var(--tinta); line-height:1.3; overflow-wrap:break-word;
+}
+
+@media (max-width:760px){
+  .carrusel{ gap:8px; }
+  .carrusel-slot[data-nivel="0"]{ flex-basis:250px; min-height:360px; }
+  .carrusel-slot[data-nivel="0"] .carta{ padding:28px 22px; }
+  .carrusel-slot[data-nivel="0"] .mensaje{ font-size:1.08rem; }
+  .carrusel-slot[data-nivel="1"]{ flex-basis:120px; min-height:210px; }
+  .carrusel-slot[data-nivel="2"]{ flex-basis:74px; min-height:140px; }
+}
+@media (max-width:480px){
+  .carrusel-slot[data-nivel="2"]{ display:none; }
+  .carrusel-slot[data-nivel="0"]{ flex-basis:210px; min-height:340px; }
+  .carrusel-slot[data-nivel="0"] .carta{ padding:24px 18px; }
+  .carrusel-slot[data-nivel="0"] .mensaje{ font-size:1rem; }
+  .carrusel-slot[data-nivel="1"]{ flex-basis:90px; min-height:190px; }
+}
+
+.carrusel-controles{
+  display:flex; justify-content:center; align-items:center; gap:26px;
+  margin-top:24px;
+}
+.btn-flecha{
+  width:44px; height:44px; border-radius:50%;
+  border:1px solid var(--oro); background:transparent; color:var(--tinta);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; padding:0; flex:0 0 auto;
+}
+.btn-flecha:hover{ background:var(--oro); color:var(--blanco-calido); }
+.btn-flecha svg{ width:18px; height:18px; }
+.carrusel-indicador{
+  text-align:center; margin-top:12px;
+  font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--rosa-viejo);
+}
+
+.seccion-titulo{ margin:50px auto 16px; text-align:center; max-width:640px; }
+.seccion-titulo h2{ font-size:1.2rem; font-style:italic; }
+.tabla-confirmaciones{ width:100%; max-width:640px; margin:0 auto; border-collapse:collapse; font-size:.8rem; }
+.tabla-confirmaciones th, .tabla-confirmaciones td{
+  text-align:left; padding:8px 8px; border-bottom:1px solid var(--pergamino-2);
+}
+.tabla-confirmaciones th{
+  font-size:.64rem; letter-spacing:.08em; text-transform:uppercase; color:var(--rosa-viejo); font-weight:500;
+}
+
+.vacio, .estado{ text-align:center; opacity:.6; padding:30px 10px; font-size:.9rem; }
+.oculto{ display:none; }
+
+.nav-sitio{ display:flex; background:var(--tinta); }
+.nav-sitio a{
+  flex:1 1 auto; text-align:center; padding:14px 12px;
+  color:var(--pergamino); text-decoration:none;
+  font-family:var(--texto); font-size:.7rem; letter-spacing:.14em; text-transform:uppercase;
+  border-right:1px solid rgba(255,255,255,.14);
+  transition:background .25s ease, color .25s ease;
+}
+.nav-sitio a:last-child{ border-right:none; }
+.nav-sitio a:hover{ background:var(--oro); color:#fff; }
+
+/* ============================================================
+   TEMA XV AÑOS — victoriano en rosa baby + dorado + blanco
+   (mismo estilo que invitacion.html). Va al final del <style>
+   para ganarle a los valores que venían de la boda.
+   ============================================================ */
+:root{
+  --tinta:#5B3A41; --pergamino:#FFFAF8; --pergamino-2:#F5E1E7;
+  --rosa-viejo:#8F6B17; --oro:#C9A227; --salvia:#C9637F; --alerta:#B3413C;
+  --blanco:#FFFFFF; --blanco-calido:#FFFFFF;
+  --titulo:#A64D69; --vino:#F6C9D5;
+  --display:"Cormorant Garamond", serif; --texto:"Jost", sans-serif;
+  --capitular:"Cinzel Decorative", serif;
+  --sombra:0 18px 40px -18px rgba(150,80,100,.38);
+}
+body{
+  background-color:var(--pergamino);
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2714%27%20height%3D%2714%27%20viewBox%3D%270%200%2014%2014%27%3E%3Ccircle%20cx%3D%273%27%20cy%3D%277%27%20r%3D%271.6%27%20fill%3D%27%23C9A227%27%2F%3E%3Ccircle%20cx%3D%279%27%20cy%3D%277%27%20r%3D%271.6%27%20fill%3D%27%23C9A227%27%2F%3E%3C%2Fsvg%3E"), url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2714%27%20height%3D%2714%27%20viewBox%3D%270%200%2014%2014%27%3E%3Ccircle%20cx%3D%273%27%20cy%3D%277%27%20r%3D%271.6%27%20fill%3D%27%23C9A227%27%2F%3E%3Ccircle%20cx%3D%279%27%20cy%3D%277%27%20r%3D%271.6%27%20fill%3D%27%23C9A227%27%2F%3E%3C%2Fsvg%3E"), url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27160%27%20height%3D%27160%27%20viewBox%3D%270%200%20160%20160%27%3E%20%3Cg%20fill%3D%27none%27%20stroke%3D%27%23E3A9BA%27%20stroke-opacity%3D%27.26%27%20stroke-width%3D%271.3%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%20%3Cpath%20d%3D%27M80%2C14%20C70%2C24%2062%2C38%2068%2C52%20C72%2C60%2064%2C66%2058%2C60%20C52%2C54%2058%2C46%2064%2C50%27%2F%3E%20%3Cpath%20d%3D%27M68%2C52%20C56%2C40%2042%2C36%2030%2C42%20C42%2C46%2052%2C54%2068%2C52%20Z%27%2F%3E%20%3Cpath%20d%3D%27M80%2C58%20C64%2C60%2050%2C72%2052%2C88%20C54%2C100%2070%2C102%2072%2C92%20C73%2C86%2066%2C84%2064%2C88%27%2F%3E%20%3Cpath%20d%3D%27M80%2C104%20C72%2C114%2058%2C120%2046%2C116%20C40%2C114%2040%2C106%2046%2C106%27%2F%3E%20%3Cpath%20d%3D%27M80%2C128%20C70%2C132%2062%2C140%2064%2C150%27%2F%3E%20%3Cpath%20d%3D%27M54%2C74%20C44%2C72%2034%2C78%2032%2C88%20C40%2C84%2048%2C82%2054%2C74%20Z%27%2F%3E%3Cg%20transform%3D%27translate%28160%200%29%20scale%28-1%201%29%27%3E%3Cpath%20d%3D%27M80%2C14%20C70%2C24%2062%2C38%2068%2C52%20C72%2C60%2064%2C66%2058%2C60%20C52%2C54%2058%2C46%2064%2C50%27%2F%3E%20%3Cpath%20d%3D%27M68%2C52%20C56%2C40%2042%2C36%2030%2C42%20C42%2C46%2052%2C54%2068%2C52%20Z%27%2F%3E%20%3Cpath%20d%3D%27M80%2C58%20C64%2C60%2050%2C72%2052%2C88%20C54%2C100%2070%2C102%2072%2C92%20C73%2C86%2066%2C84%2064%2C88%27%2F%3E%20%3Cpath%20d%3D%27M80%2C104%20C72%2C114%2058%2C120%2046%2C116%20C40%2C114%2040%2C106%2046%2C106%27%2F%3E%20%3Cpath%20d%3D%27M80%2C128%20C70%2C132%2062%2C140%2064%2C150%27%2F%3E%20%3Cpath%20d%3D%27M54%2C74%20C44%2C72%2034%2C78%2032%2C88%20C40%2C84%2048%2C82%2054%2C74%20Z%27%2F%3E%3C%2Fg%3E%20%3Cpath%20d%3D%27M80%2C60%20C73%2C72%2073%2C88%2080%2C100%20C87%2C88%2087%2C72%2080%2C60%20Z%27%2F%3E%3Ccircle%20cx%3D%2780%27%20cy%3D%2780%27%20r%3D%273%27%2F%3E%3Cpath%20d%3D%27M80%2C104%20L80%2C128%27%2F%3E%20%3C%2Fg%3E%3C%2Fsvg%3E");
+  background-repeat:repeat-y, repeat-y, repeat;
+  background-position:left top, right top, top left;
+  background-size:14px 14px, 14px 14px, 180px 180px;
+}
+h1{ font-family:var(--capitular) !important; font-style:normal !important; font-weight:700 !important; color:var(--titulo); letter-spacing:.01em; }
+h2, h3{ color:var(--titulo); }
+.ojo-de-cerradura, header p.sub{ color:var(--rosa-viejo) !important; }
+.nav-sitio{ background:var(--vino) !important; border-bottom:2px solid var(--oro); }
+.nav-sitio a{ color:var(--tinta) !important; font-weight:500; border-right-color:rgba(201,162,39,.45) !important; }
+.nav-sitio a:hover{ background:var(--titulo) !important; color:#FFFFFF !important; }
+.boton{ border-radius:999px !important; }
+.boton:hover{ background:var(--oro); color:#FFFFFF; }
+.boton--solido{ background:var(--titulo) !important; border-color:var(--titulo) !important; color:#FFFFFF !important; }
+.boton--solido:hover{ background:var(--oro) !important; border-color:var(--oro) !important; }
+.carta, .tarjeta, .tarjeta-lugar, .fila-invitado{ border-radius:16px !important; outline:1px solid var(--oro); outline-offset:-6px; }
+
+.cabecera h1{ font-size:clamp(1.6rem, 6vw, 2.3rem); }
+.resumen .num{ font-family:var(--capitular); font-weight:700; color:var(--titulo); }
+.carta .corazon, .mini-corazon{ color:var(--salvia); }
+.carta .mensaje{ font-size:1.18rem; }
+.seccion-titulo h2{ font-family:var(--capitular); font-style:normal; font-weight:700; font-size:1.25rem; }
+.tabla-confirmaciones{ max-width:760px; background:var(--blanco); border-radius:14px; overflow:hidden; box-shadow:var(--sombra); }
+.tabla-confirmaciones th{ background:var(--vino); color:var(--tinta); }
+.btn-flecha{ border-color:var(--oro); }
+</style>
+</head>
+<body>
+
+<nav class="nav-sitio">
+  <a href="invitacion.html">Invitación</a>
+  <a href="croquis-mesas.html">Croquis de mesas</a>
+  <a href="confirmacion.html">Confirmaciones</a>
+</nav>
+
+<!-- ================================================================
+     ⚙️ CONFIGURACIÓN — pega aquí la misma URL que usaste en invitacion.html
+     ================================================================ -->
+<script>
+const CONFIG = {
+  nombreQuinceanera: "Amellali",
+  // La misma URL de Google Apps Script que en invitacion.html
+  // (CONFIG.urlConfirmaciones), terminada en /exec.
+  urlConfirmaciones: "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT"
+};
+</script>
+
+<div class="envoltura">
+  <div class="cabecera">
+    <p class="ojo-de-cerradura">Panel de organizadores</p>
+    <h1 id="titulo-panel">Dedicatorias</h1>
+    <div class="divisor"><svg viewBox="0 0 160 30" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1" stroke-linecap="round"><path d="M4 15 H54"/><path d="M106 15 H156"/><path d="M54 15 c6 0 10 -8 4 -10 c-4 -1 -6 4 -2 5"/><path d="M54 15 c6 0 10 8 4 10 c-4 1 -6 -4 -2 -5"/><path d="M106 15 c-6 0 -10 -8 -4 -10 c4 -1 6 4 2 5"/><path d="M106 15 c-6 0 -10 8 -4 10 c4 1 6 -4 2 -5"/><path d="M80 6 L88 15 L80 24 L72 15 Z" fill="currentColor"/><circle cx="66" cy="15" r="1.6" fill="currentColor"/><circle cx="94" cy="15" r="1.6" fill="currentColor"/></svg></div>
+  </div>
+
+  <div class="resumen" id="resumen"></div>
+
+  <div class="fila-botones">
+    <button class="boton" id="btn-actualizar">Actualizar</button>
+  </div>
+
+  <div id="estado" class="estado"></div>
+  <div id="cont-dedicatorias"></div>
+
+  <div class="seccion-titulo">
+    <h2>Lista de confirmaciones</h2>
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="tabla-confirmaciones" id="tabla-confirmaciones"></table>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const SVG_CORAZON = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-10.1-9.3C.4 8.7 1.9 5 5.4 4.3c2-.4 3.9.5 5 2.1a5.9 5.9 0 0 1 5-2.1c3.5.7 5 4.4 3.5 7.4C19.5 16.4 12 21 12 21z"/></svg>`;
+
+$("titulo-panel").textContent = "Dedicatorias para " + CONFIG.nombreQuinceanera;
+
+function formatearFecha(iso){
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString("es-MX", { day:"numeric", month:"short", year:"numeric" });
+  } catch { return iso; }
+}
+
+function escaparHTML(texto){
+  const div = document.createElement("div");
+  div.textContent = texto || "";
+  return div.innerHTML;
+}
+
+async function cargarDatos(){
+  $("estado").textContent = "Cargando...";
+  $("cont-dedicatorias").innerHTML = "";
+  $("tabla-confirmaciones").innerHTML = "";
+  $("resumen").innerHTML = "";
+
+  if (!CONFIG.urlConfirmaciones || CONFIG.urlConfirmaciones.startsWith("PEGA_AQUI")) {
+    $("estado").textContent = "Falta configurar CONFIG.urlConfirmaciones en este archivo (la misma URL que usaste en invitacion.html).";
+    return;
+  }
+
+  if (location.protocol === "file:") {
+    $("estado").innerHTML =
+      "Este archivo se abrió directamente desde tu computadora (doble clic), y los " +
+      "navegadores bloquean ese tipo de conexión por seguridad.<br><br>" +
+      "Solución: sube <code>index.html</code> a donde tengas hospedada " +
+      "la invitación (GitHub Pages, Netlify, Vercel o Firebase Hosting) y ábrelo " +
+      "desde esa URL en vez de abrir el archivo local.";
+    return;
+  }
+
+  try {
+    const url = `${CONFIG.urlConfirmaciones}?accion=listar`;
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      $("estado").textContent = `El servidor respondió con un error (código ${resp.status}). Revisa que la URL de CONFIG.urlConfirmaciones sea exactamente la misma que en invitacion.html.`;
+      return;
+    }
+    const datos = await resp.json();
+
+    if (!datos.ok) {
+      $("estado").textContent = "No se pudieron cargar los datos: " + (datos.error || "error desconocido") + ".";
+      return;
+    }
+
+    $("estado").textContent = "";
+    pintarDatos(datos.confirmaciones);
+  } catch (err) {
+    $("estado").innerHTML =
+      "No se pudo conectar.<br><br>" +
+      "<strong>Detalle técnico:</strong> " + escaparHTML(err.message) + "<br><br>" +
+      "Revisa: 1) que la URL de CONFIG.urlConfirmaciones sea correcta y termine en " +
+      "<code>/exec</code>, 2) que en Google Apps Script, en \"Quién tiene acceso\", " +
+      "esté puesto \"Cualquier usuario\", y 3) que hayas creado una \"Nueva versión\" " +
+      "al implementar después de cualquier cambio.";
+  }
+}
+
+let listaDedicatorias = [];
+let indiceActual = 0;
+
+const SVG_FLECHA_IZQ = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>`;
+const SVG_FLECHA_DER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>`;
+
+function renderCarta(c){
+  return `
+    <div class="carta">
+      <div class="corazon">${SVG_CORAZON}</div>
+      <p class="mensaje">«${escaparHTML(c.mensaje)}»</p>
+      <p class="firma">${escaparHTML(c.nombre)}
+        <span class="personas">${textoPersonas(c)}</span>
+      </p>
+      <span class="fecha">${formatearFecha(c.fecha)}</span>
+    </div>`;
+}
+
+function textoPersonas(c){
+  // Confirmaciones viejas (sin desglose) solo traen el total en `pases`
+  if (!c.adultos && !c.ninos) return `${c.pases} persona${c.pases === 1 ? "" : "s"}`;
+  const partes = [`${c.adultos} adulto${c.adultos === 1 ? "" : "s"}`];
+  if (c.ninos) partes.push(`${c.ninos} niño${c.ninos === 1 ? "" : "s"}`);
+  return partes.join(" · ");
+}
+
+function renderCartaMini(c){
+  return `
+    <div class="carta">
+      <div class="mini-corazon">${SVG_CORAZON}</div>
+      <p class="mini-nombre">${escaparHTML(c.nombre)}</p>
+    </div>`;
+}
+
+// Cuántas tarjetas como máximo se muestran a la vez (centro + 2 de cada
+// lado = 5). Por rendimiento, sin importar cuántas dedicatorias haya en
+// total, nunca se dibujan más de estas al mismo tiempo.
+const RADIO_VENTANA_MAX = 2;
+
+function radioVentana(total){
+  return Math.min(RADIO_VENTANA_MAX, Math.floor((total - 1) / 2));
+}
+
+function indicesVentana(centro, total){
+  const radio = radioVentana(total);
+  const idxs = [];
+  for (let k = -radio; k <= radio; k++){
+    idxs.push({ k, idx: ((centro + k) % total + total) % total });
+  }
+  return idxs;
+}
+
+function mostrarCarrusel(){
+  const cont = $("cont-dedicatorias");
+
+  if (listaDedicatorias.length === 0) {
+    cont.innerHTML = `<p class="vacio">Todavía no hay dedicatorias. Aparecerán aquí en cuanto algún invitado escriba una al confirmar.</p>`;
+    return;
+  }
+
+  indiceActual = 0;
+  cont.innerHTML = `
+    <div class="carrusel" id="carrusel-pista"></div>
+    ${listaDedicatorias.length > 1 ? `
+      <div class="carrusel-controles">
+        <button class="btn-flecha" id="btn-prev" aria-label="Dedicatoria anterior">${SVG_FLECHA_IZQ}</button>
+        <button class="btn-flecha" id="btn-next" aria-label="Dedicatoria siguiente">${SVG_FLECHA_DER}</button>
+      </div>
+      <p class="carrusel-indicador" id="carrusel-indicador"></p>
+    ` : ""}
+  `;
+
+  renderVentana();
+
+  if (listaDedicatorias.length > 1) {
+    actualizarIndicador();
+    $("btn-prev").addEventListener("click", () => cambiarCarta(-1));
+    $("btn-next").addEventListener("click", () => cambiarCarta(1));
+    document.addEventListener("keydown", manejarTeclado);
+  }
+}
+
+function renderVentana(){
+  const pista = $("carrusel-pista");
+  const ventana = indicesVentana(indiceActual, listaDedicatorias.length);
+  pista.innerHTML = ventana.map(({ k, idx }) => {
+    const nivel = Math.abs(k);
+    const c = listaDedicatorias[idx];
+    return `<div class="carrusel-slot" data-nivel="${nivel}">${nivel === 0 ? renderCarta(c) : renderCartaMini(c)}</div>`;
+  }).join("");
+}
+
+function manejarTeclado(ev){
+  if (!document.getElementById("carrusel-pista")) return;
+  if (ev.key === "ArrowLeft") cambiarCarta(-1);
+  if (ev.key === "ArrowRight") cambiarCarta(1);
+}
+
+function actualizarIndicador(){
+  $("carrusel-indicador").textContent = `${indiceActual + 1} / ${listaDedicatorias.length}`;
+}
+
+function cambiarCarta(direccion){
+  if (listaDedicatorias.length <= 1) return;
+  const pista = $("carrusel-pista");
+  if (pista.dataset.animando === "1") return;
+  pista.dataset.animando = "1";
+
+  indiceActual = (indiceActual + direccion + listaDedicatorias.length) % listaDedicatorias.length;
+  // Al re-dibujar, cada tarjeta que se queda en la ventana pasa suavemente
+  // de su tamaño/opacidad anterior al nuevo (gracias a la transición en
+  // .carrusel-slot), dando la sensación de que se van acomodando en su
+  // nuevo lugar sin desaparecer de golpe.
+  renderVentana();
+  actualizarIndicador();
+
+  // Además, deslizamos todo el carrusel: arrancan un poco desplazadas
+  // hacia el lado por donde "entra" el contenido nuevo, y se acomodan
+  // deslizándose hasta su posición final.
+  const slots = document.querySelectorAll("#carrusel-pista .carrusel-slot");
+  slots.forEach(slot => {
+    slot.style.transition = "none";
+    slot.style.transform = `translateX(${direccion * 50}px)`;
+  });
+  void pista.offsetWidth; // fuerza el reflow para que la siguiente transición sí anime
+  slots.forEach(slot => {
+    slot.style.transition = "transform .5s cubic-bezier(.4,0,.2,1), flex-basis .5s cubic-bezier(.4,0,.2,1), min-height .5s cubic-bezier(.4,0,.2,1), opacity .5s ease";
+    slot.style.transform = "translateX(0)";
+  });
+
+  setTimeout(() => { pista.dataset.animando = "0"; }, 520);
+}
+
+function pintarDatos(confirmaciones){
+  const confirmados = confirmaciones.filter(c => c.asiste === "Sí");
+  const totalPersonas = confirmados.reduce((s,c) => s + (c.pases || 0), 0);
+  const totalAdultos = confirmados.reduce((s,c) => s + (c.adultos || 0), 0);
+  const totalNinos = confirmados.reduce((s,c) => s + (c.ninos || 0), 0);
+  const conMensaje = confirmaciones.filter(c => c.mensaje && c.mensaje.trim());
+
+  $("resumen").innerHTML = `
+    <div><div class="num">${confirmados.length}</div><div class="lbl">Confirmaron</div></div>
+    <div><div class="num">${totalPersonas}</div><div class="lbl">Personas</div></div>
+    <div><div class="num">${totalAdultos}</div><div class="lbl">Adultos</div></div>
+    <div><div class="num">${totalNinos}</div><div class="lbl">Niños -12</div></div>
+    <div><div class="num">${conMensaje.length}</div><div class="lbl">Dedicatorias</div></div>
+  `;
+
+  listaDedicatorias = conMensaje;
+  mostrarCarrusel();
+
+  if (confirmaciones.length === 0) {
+    $("tabla-confirmaciones").innerHTML = `<tr><td class="vacio">Aún no hay confirmaciones.</td></tr>`;
+  } else {
+    $("tabla-confirmaciones").innerHTML = `
+      <tr><th>Nombre</th><th>Asiste</th><th>Adultos</th><th>Niños</th><th>Total</th><th>Fecha</th></tr>
+      ${confirmaciones.map(c => `
+        <tr>
+          <td>${escaparHTML(c.nombre)}</td>
+          <td>${escaparHTML(c.asiste)}</td>
+          <td>${c.adultos || "—"}</td>
+          <td>${c.ninos || 0}</td>
+          <td><strong>${c.pases}</strong></td>
+          <td>${formatearFecha(c.fecha)}</td>
+        </tr>
+      `).join("")}
+    `;
+  }
+}
+
+$("btn-actualizar").addEventListener("click", cargarDatos);
+
+cargarDatos();
+</script>
+</body>
+</html>

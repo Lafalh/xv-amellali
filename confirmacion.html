@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confirmaciones · XV de Amellali</title>
+<meta name="robots" content="noindex, nofollow">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Pinyon+Script&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --tinta:#33391F; --pergamino:#FBF7EA; --pergamino-2:#F1EEE3; --blanco:#FFFFFF;
+  --rosa-viejo:#A6822C; --oro:#C9A227; --salvia:#8B9A5B; --alerta:#B3413C;
+  --display:"Cormorant Garamond",serif; --texto:"Jost",sans-serif;
+  --sombra:0 14px 34px -16px rgba(51,57,31,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{ height:100%; }
+body{
+  font-family:var(--texto); background:var(--pergamino); color:var(--tinta); font-size:14px;
+  display:flex; flex-direction:column; height:100vh; overflow:hidden;
+}
+h1,h2{ font-family:var(--display); font-weight:500; }
+
+.nav-sitio{ flex:0 0 auto; display:flex; background:var(--tinta); }
+.nav-sitio a{
+  flex:1 1 auto; text-align:center; padding:12px 10px;
+  color:var(--pergamino); text-decoration:none;
+  font-family:var(--texto); font-size:.68rem; letter-spacing:.12em; text-transform:uppercase;
+  border-right:1px solid rgba(255,255,255,.14);
+  transition:background .25s ease, color .25s ease;
+}
+.nav-sitio a:last-child{ border-right:none; }
+.nav-sitio a:hover{ background:var(--oro); color:#fff; }
+
+header{ flex:0 0 auto; padding:16px 24px 12px; border-bottom:1px solid var(--pergamino-2); background:var(--blanco);
+        display:flex; align-items:baseline; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+header p.sub{ font-size:.72rem; color:var(--rosa-viejo); letter-spacing:.14em; text-transform:uppercase; }
+header h1{ font-size:1.4rem; font-style:italic; margin-top:2px; }
+.acciones{ display:flex; gap:8px; flex-wrap:wrap; }
+
+.resumen{ flex:0 0 auto; display:flex; flex-wrap:wrap; gap:0; padding:11px 24px; background:var(--blanco); border-bottom:1px solid var(--pergamino-2); }
+.dato{ padding:2px 22px 2px 0; margin-right:22px; border-right:1px solid var(--pergamino-2); }
+.dato:last-child{ border-right:none; }
+.dato .num{ font-family:var(--display); font-size:1.3rem; color:var(--tinta); line-height:1.1; }
+.dato .lbl{ font-size:.6rem; color:var(--rosa-viejo); letter-spacing:.08em; text-transform:uppercase; margin-top:2px; }
+.dato.alerta .num{ color:var(--alerta); }
+
+.barra{ flex:0 0 auto; padding:12px 24px; border-bottom:1px solid var(--pergamino-2); background:var(--blanco); }
+.barra input[type=text]{
+  width:100%; max-width:420px; padding:10px 12px; border:1px solid var(--pergamino-2);
+  background:var(--pergamino); font-family:inherit; font-size:.9rem; border-radius:3px;
+}
+
+.lista-invitados{
+  flex:1 1 auto; min-height:0; overflow-y:auto;
+  display:grid; grid-template-columns:1fr; gap:12px; align-content:start;
+  max-width:1200px; width:100%; margin:0 auto; padding:18px 24px 40px;
+}
+@media (min-width:680px){ .lista-invitados{ grid-template-columns:1fr 1fr; } }
+@media (min-width:1000px){ .lista-invitados{ grid-template-columns:1fr 1fr 1fr; } }
+.fila-invitado{
+  display:flex; flex-direction:column; gap:10px;
+  background:var(--blanco); border:1px solid var(--pergamino-2); border-radius:3px;
+  padding:14px 16px;
+}
+.fila-invitado .nombre{ font-weight:500; font-size:.95rem; }
+.fila-invitado .cont{ font-size:.72rem; color:var(--rosa-viejo); margin-top:2px; }
+.fila-mesas{ display:flex; flex-wrap:wrap; gap:6px; }
+.pastilla-mesa{
+  display:inline-flex; align-items:center; gap:4px; padding:4px 11px; border-radius:14px;
+  font-size:.72rem; background:var(--pergamino); border:1px solid var(--pergamino-2);
+}
+.pastilla-mesa .n{ font-family:var(--display); font-style:italic; color:var(--rosa-viejo); }
+.pendiente{ font-size:.72rem; color:var(--alerta); font-weight:500; }
+.acciones-fila{ display:flex; gap:8px; flex-wrap:wrap; margin-top:auto; padding-top:2px; }
+
+.boton{
+  font-family:var(--texto); font-size:.68rem; letter-spacing:.08em; text-transform:uppercase;
+  border:1px solid var(--oro); background:transparent; color:var(--tinta);
+  padding:8px 14px; border-radius:2px; cursor:pointer; text-decoration:none; display:inline-block;
+}
+.boton:hover{ background:var(--oro); color:#fff; }
+.boton--solido{ background:var(--oro); color:#fff; }
+.boton--solido:hover{ background:var(--tinta); border-color:var(--tinta); }
+
+.vacio, .estado{ text-align:center; opacity:.6; padding:40px 12px; font-size:.9rem; }
+.oculto{ display:none; }
+
+/* ============================================================
+   TEMA XV AÑOS — victoriano en rosa baby + dorado + blanco
+   (mismo estilo que invitacion.html). Va al final del <style>
+   para ganarle a los valores que venían de la boda.
+   ============================================================ */
+:root{
+  --tinta:#5B3A41; --pergamino:#FFFAF8; --pergamino-2:#F5E1E7;
+  --rosa-viejo:#8F6B17; --oro:#C9A227; --salvia:#C9637F; --alerta:#B3413C;
+  --blanco:#FFFFFF; --blanco-calido:#FFFFFF;
+  --titulo:#A64D69; --vino:#F6C9D5;
+  --display:"Cormorant Garamond", serif; --texto:"Jost", sans-serif;
+  --capitular:"Cinzel Decorative", serif;
+  --sombra:0 18px 40px -18px rgba(150,80,100,.38);
+}
+body{
+  background-color:var(--pergamino);
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2714%27%20height%3D%2714%27%20viewBox%3D%270%200%2014%2014%27%3E%3Ccircle%20cx%3D%273%27%20cy%3D%277%27%20r%3D%271.6%27%20fill%3D%27%23C9A227%27%2F%3E%3Ccircle%20cx%3D%279%27%20cy%3D%277%27%20r%3D%271.6%27%20fill%3D%27%23C9A227%27%2F%3E%3C%2Fsvg%3E"), url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2714%27%20height%3D%2714%27%20viewBox%3D%270%200%2014%2014%27%3E%3Ccircle%20cx%3D%273%27%20cy%3D%277%27%20r%3D%271.6%27%20fill%3D%27%23C9A227%27%2F%3E%3Ccircle%20cx%3D%279%27%20cy%3D%277%27%20r%3D%271.6%27%20fill%3D%27%23C9A227%27%2F%3E%3C%2Fsvg%3E"), url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27160%27%20height%3D%27160%27%20viewBox%3D%270%200%20160%20160%27%3E%20%3Cg%20fill%3D%27none%27%20stroke%3D%27%23E3A9BA%27%20stroke-opacity%3D%27.26%27%20stroke-width%3D%271.3%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%20%3Cpath%20d%3D%27M80%2C14%20C70%2C24%2062%2C38%2068%2C52%20C72%2C60%2064%2C66%2058%2C60%20C52%2C54%2058%2C46%2064%2C50%27%2F%3E%20%3Cpath%20d%3D%27M68%2C52%20C56%2C40%2042%2C36%2030%2C42%20C42%2C46%2052%2C54%2068%2C52%20Z%27%2F%3E%20%3Cpath%20d%3D%27M80%2C58%20C64%2C60%2050%2C72%2052%2C88%20C54%2C100%2070%2C102%2072%2C92%20C73%2C86%2066%2C84%2064%2C88%27%2F%3E%20%3Cpath%20d%3D%27M80%2C104%20C72%2C114%2058%2C120%2046%2C116%20C40%2C114%2040%2C106%2046%2C106%27%2F%3E%20%3Cpath%20d%3D%27M80%2C128%20C70%2C132%2062%2C140%2064%2C150%27%2F%3E%20%3Cpath%20d%3D%27M54%2C74%20C44%2C72%2034%2C78%2032%2C88%20C40%2C84%2048%2C82%2054%2C74%20Z%27%2F%3E%3Cg%20transform%3D%27translate%28160%200%29%20scale%28-1%201%29%27%3E%3Cpath%20d%3D%27M80%2C14%20C70%2C24%2062%2C38%2068%2C52%20C72%2C60%2064%2C66%2058%2C60%20C52%2C54%2058%2C46%2064%2C50%27%2F%3E%20%3Cpath%20d%3D%27M68%2C52%20C56%2C40%2042%2C36%2030%2C42%20C42%2C46%2052%2C54%2068%2C52%20Z%27%2F%3E%20%3Cpath%20d%3D%27M80%2C58%20C64%2C60%2050%2C72%2052%2C88%20C54%2C100%2070%2C102%2072%2C92%20C73%2C86%2066%2C84%2064%2C88%27%2F%3E%20%3Cpath%20d%3D%27M80%2C104%20C72%2C114%2058%2C120%2046%2C116%20C40%2C114%2040%2C106%2046%2C106%27%2F%3E%20%3Cpath%20d%3D%27M80%2C128%20C70%2C132%2062%2C140%2064%2C150%27%2F%3E%20%3Cpath%20d%3D%27M54%2C74%20C44%2C72%2034%2C78%2032%2C88%20C40%2C84%2048%2C82%2054%2C74%20Z%27%2F%3E%3C%2Fg%3E%20%3Cpath%20d%3D%27M80%2C60%20C73%2C72%2073%2C88%2080%2C100%20C87%2C88%2087%2C72%2080%2C60%20Z%27%2F%3E%3Ccircle%20cx%3D%2780%27%20cy%3D%2780%27%20r%3D%273%27%2F%3E%3Cpath%20d%3D%27M80%2C104%20L80%2C128%27%2F%3E%20%3C%2Fg%3E%3C%2Fsvg%3E");
+  background-repeat:repeat-y, repeat-y, repeat;
+  background-position:left top, right top, top left;
+  background-size:14px 14px, 14px 14px, 180px 180px;
+}
+h1{ font-family:var(--capitular) !important; font-style:normal !important; font-weight:700 !important; color:var(--titulo); letter-spacing:.01em; }
+h2, h3{ color:var(--titulo); }
+.ojo-de-cerradura, header p.sub{ color:var(--rosa-viejo) !important; }
+.nav-sitio{ background:var(--vino) !important; border-bottom:2px solid var(--oro); }
+.nav-sitio a{ color:var(--tinta) !important; font-weight:500; border-right-color:rgba(201,162,39,.45) !important; }
+.nav-sitio a:hover{ background:var(--titulo) !important; color:#FFFFFF !important; }
+.boton{ border-radius:999px !important; }
+.boton:hover{ background:var(--oro); color:#FFFFFF; }
+.boton--solido{ background:var(--titulo) !important; border-color:var(--titulo) !important; color:#FFFFFF !important; }
+.boton--solido:hover{ background:var(--oro) !important; border-color:var(--oro) !important; }
+.carta, .tarjeta, .tarjeta-lugar, .fila-invitado{ border-radius:16px !important; outline:1px solid var(--oro); outline-offset:-6px; }
+
+header h1{ font-size:1.5rem; }
+.dato .num{ font-family:var(--capitular); font-weight:700; color:var(--titulo); }
+.pastilla-mesa{ background:var(--vino); border-color:var(--vino); }
+.pastilla-mesa .n{ color:var(--titulo); font-weight:600; }
+.barra input[type=text]{ border-radius:999px; padding:10px 16px; }
+</style>
+</head>
+<body>
+
+<nav class="nav-sitio">
+  <a href="index.html">Dedicatorias</a>
+  <a href="invitacion.html">Invitación</a>
+  <a href="croquis-mesas.html">Croquis de mesas</a>
+</nav>
+
+<script>
+const CONFIG = {
+  urlConfirmaciones: "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT",
+  // Nombre del archivo con la página personalizada de cada invitado.
+  paginaInvitado: "mi-confirmacion.html"
+};
+</script>
+
+<header>
+  <div>
+    <p class="sub">Panel privado</p>
+    <h1>Confirmaciones</h1>
+  </div>
+  <div class="acciones">
+    <a class="boton" href="invitacion.html" target="_blank" rel="noopener" title="Abrir la invitación tal como la ven los invitados">Ver invitación</a>
+  </div>
+</header>
+
+<div class="resumen" id="resumen"></div>
+
+<div class="barra">
+  <input type="text" id="buscar" placeholder="Buscar invitado…">
+</div>
+
+<div id="estado" class="estado">Cargando...</div>
+<div class="lista-invitados" id="lista"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+function esc(t){ const d=document.createElement("div"); d.textContent=t||""; return d.innerHTML; }
+function normalizar(t){
+  return (t||"").trim().toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+}
+
+let invitados = [];
+let croquisActual = null;
+let busqueda = "";
+
+/* Agrupa los `grupos` del croquis por nombre (normalizado): un mismo
+   invitado puede tener varias filas en la hoja de invitados (porque quedó
+   repartido en distintas mesas), así que se juntan en una sola fila con
+   todas sus mesas. */
+function agruparPorInvitado(croquis){
+  const mapa = new Map();
+  croquis.grupos.forEach(g => {
+    const clave = normalizar(g.nombre);
+    if (!mapa.has(clave)) mapa.set(clave, { nombre: g.nombre, total: 0, mesas: {} });
+    const entrada = mapa.get(clave);
+    entrada.total += g.total;
+    const asign = croquis.asign[g.id] || {};
+    Object.entries(asign).forEach(([mesaId, cant]) => {
+      entrada.mesas[mesaId] = (entrada.mesas[mesaId] || 0) + cant;
+    });
+  });
+  return Array.from(mapa.values()).sort((a,b) => a.nombre.localeCompare(b.nombre, "es"));
+}
+
+function linkInvitado(nombre){
+  const url = new URL(CONFIG.paginaInvitado, location.href);
+  url.search = "?invitado=" + encodeURIComponent(nombre);
+  return url.href;
+}
+
+function renderResumen(){
+  const totalInvitados = invitados.length;
+  const totalPersonas = invitados.reduce((s,i) => s + i.total, 0);
+  const totalAsignadas = invitados.reduce((s,i) => s + Object.values(i.mesas).reduce((a,b)=>a+b,0), 0);
+  const pendientes = totalPersonas - totalAsignadas;
+  $("resumen").innerHTML = `
+    <div class="dato"><div class="num">${totalInvitados}</div><div class="lbl">Invitados</div></div>
+    <div class="dato"><div class="num">${totalPersonas}</div><div class="lbl">Personas</div></div>
+    <div class="dato"><div class="num">${totalAsignadas}</div><div class="lbl">Con mesa</div></div>
+    <div class="dato ${pendientes>0?"alerta":""}"><div class="num">${pendientes}</div><div class="lbl">Sin mesa</div></div>
+  `;
+}
+
+function renderLista(){
+  const filtrados = busqueda
+    ? invitados.filter(i => normalizar(i.nombre).includes(normalizar(busqueda)))
+    : invitados;
+
+  if (!filtrados.length){
+    $("lista").innerHTML = `<p class="vacio">Sin resultados.</p>`;
+    return;
+  }
+
+  $("lista").innerHTML = filtrados.map(inv => {
+    const mesaIds = Object.keys(inv.mesas);
+    const mesasHTML = mesaIds.length
+      ? `<div class="fila-mesas">${mesaIds.map(mid => {
+          const m = croquisActual.mesas.find(x => x.id === mid);
+          return `<span class="pastilla-mesa">Mesa <span class="n">${esc(m ? m.numero : "?")}</span> · ${inv.mesas[mid]}</span>`;
+        }).join("")}</div>`
+      : `<span class="pendiente">Sin mesa asignada</span>`;
+    return `
+      <div class="fila-invitado">
+        <div>
+          <div class="nombre">${esc(inv.nombre)}</div>
+          <div class="cont">${inv.total} persona${inv.total===1?"":"s"}</div>
+          <div style="margin-top:6px;">${mesasHTML}</div>
+        </div>
+        <div class="acciones-fila">
+          <a class="boton" href="${linkInvitado(inv.nombre)}" target="_blank" rel="noopener">Vista previa</a>
+          <button class="boton boton--solido" data-copiar="${esc(inv.nombre)}">Copiar link</button>
+        </div>
+      </div>`;
+  }).join("");
+
+  $("lista").querySelectorAll("[data-copiar]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const url = linkInvitado(btn.dataset.copiar);
+      navigator.clipboard.writeText(url).then(() => {
+        const original = btn.textContent;
+        btn.textContent = "¡Copiado!";
+        setTimeout(() => { btn.textContent = original; }, 1500);
+      }).catch(() => { prompt("Copia este link manualmente:", url); });
+    });
+  });
+}
+
+async function cargar(){
+  $("estado").textContent = "Cargando...";
+  $("estado").classList.remove("oculto");
+  $("lista").innerHTML = "";
+  $("resumen").innerHTML = "";
+
+  if (location.protocol === "file:"){
+    $("estado").innerHTML =
+      "Este archivo se abrió directamente desde tu computadora (doble clic), y los " +
+      "navegadores bloquean ese tipo de conexión por seguridad.<br><br>" +
+      "Súbelo a donde tengas hospedado el sitio y ábrelo desde esa URL.";
+    return;
+  }
+  try{
+    const r = await fetch(CONFIG.urlConfirmaciones + "?accion=croquis");
+    const d = await r.json();
+    if (!d.ok || !d.croquis || !d.croquis.grupos || !d.croquis.grupos.length){
+      $("estado").textContent = "Todavía no hay invitados cargados en el croquis de mesas.";
+      return;
+    }
+    croquisActual = d.croquis;
+    invitados = agruparPorInvitado(d.croquis);
+    $("estado").classList.add("oculto");
+    renderResumen();
+    renderLista();
+  }catch(err){
+    $("estado").innerHTML =
+      "No se pudo conectar.<br><br><strong>Detalle técnico:</strong> " + esc(err.message);
+  }
+}
+
+$("buscar").addEventListener("input", e => { busqueda = e.target.value; renderLista(); });
+
+cargar();
+</script>
+</body>
+</html>

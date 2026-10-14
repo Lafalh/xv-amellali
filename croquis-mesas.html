@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Croquis de mesas · XV de Amellali</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Pinyon+Script&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- Lee archivos .xlsx en el navegador, para el botón "Importar Excel" -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --tinta:#33391F; --pergamino:#FBF7EA; --pergamino-2:#F1EEE3; --blanco:#FFFFFF;
+  --rosa-viejo:#A6822C; --oro:#C9A227; --salvia:#8B9A5B; --alerta:#B3413C;
+  --display:"Cormorant Garamond",serif; --texto:"Jost",sans-serif;
+  --sombra:0 14px 34px -16px rgba(51,57,31,.35);
+  --celda:84px;
+}
+/* --celda se encoge en pantallas chicas para que el croquis nunca pida scroll
+   horizontal (el .col-plano se queda con overflow:auto como red de seguridad). */
+@media (max-width:1250px){ :root{ --celda:70px; } }
+@media (max-width:1050px){ :root{ --celda:60px; } }
+@media (max-width:980px){  :root{ --celda:64px; } }
+@media (max-width:700px){  :root{ --celda:54px; } }
+@media (max-width:480px){  :root{ --celda:46px; } }
+@media (max-width:380px){  :root{ --celda:40px; } }
+@media (max-width:340px){  :root{ --celda:36px; } }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{ height:100%; }
+body{ font-family:var(--texto); background:var(--pergamino); color:var(--tinta); font-size:14px;
+      display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+h1,h2,h3{ font-family:var(--display); font-weight:500; }
+
+.nav-sitio{ flex:0 0 auto; display:flex; background:var(--tinta); }
+.nav-sitio a{
+  flex:1 1 auto; text-align:center; padding:12px 10px;
+  color:var(--pergamino); text-decoration:none;
+  font-family:var(--texto); font-size:.68rem; letter-spacing:.14em; text-transform:uppercase;
+  border-right:1px solid rgba(255,255,255,.14);
+  transition:background .25s ease, color .25s ease;
+}
+.nav-sitio a:last-child{ border-right:none; }
+.nav-sitio a:hover{ background:var(--oro); color:#fff; }
+
+header{ flex:0 0 auto; padding:22px 26px 16px; border-bottom:1px solid var(--pergamino-2); display:flex;
+        align-items:baseline; justify-content:space-between; gap:14px; flex-wrap:wrap; background:var(--blanco); }
+header h1{ font-size:1.7rem; font-style:italic; }
+header .sub{ font-size:.76rem; color:var(--rosa-viejo); letter-spacing:.14em; text-transform:uppercase; }
+.acciones{ display:flex; gap:8px; flex-wrap:wrap; }
+
+.boton{ font-family:var(--texto); font-size:.7rem; letter-spacing:.1em; text-transform:uppercase;
+        border:1px solid var(--oro); background:transparent; color:var(--tinta);
+        padding:8px 15px; border-radius:2px; cursor:pointer; text-decoration:none; display:inline-block; }
+.boton:hover{ background:var(--oro); color:var(--blanco); }
+.boton--solido{ background:var(--oro); color:var(--blanco); }
+.boton--solido:hover{ background:var(--tinta); border-color:var(--tinta); }
+.boton:disabled{ opacity:.35; cursor:default; }
+.boton.chico{ padding:5px 10px; font-size:.64rem; }
+
+.resumen{ flex:0 0 auto; display:flex; flex-wrap:wrap; gap:0; padding:13px 26px; background:var(--blanco);
+          border-bottom:1px solid var(--pergamino-2); }
+.dato{ padding:2px 24px 2px 0; margin-right:24px; border-right:1px solid var(--pergamino-2); }
+.dato:last-child{ border-right:none; }
+.dato .num{ font-family:var(--display); font-size:1.5rem; color:var(--tinta); line-height:1.1; }
+.dato .lbl{ font-size:.63rem; color:var(--rosa-viejo); letter-spacing:.08em; text-transform:uppercase; margin-top:2px; }
+.dato.alerta .num{ color:var(--alerta); }
+
+main{ flex:1 1 auto; min-height:0; display:flex; align-items:stretch; gap:0; overflow:hidden; }
+.col-plano{ flex:1.3; min-width:0; min-height:0; padding:16px 18px 10px 20px; overflow:auto; border-right:1px solid var(--pergamino-2); }
+.col-lista{ flex:1; min-width:0; min-height:0; max-width:460px; background:var(--blanco); align-self:stretch;
+            display:flex; flex-direction:column; }
+
+.rotulo-plano{ text-align:center; font-size:.62rem; letter-spacing:.14em; text-transform:uppercase;
+         color:var(--rosa-viejo); padding:4px 0; }
+/* Rejilla de 10 columnas x 5 filas (antes 6x9 con letras). --c/--r son la
+   columna/fila logicas de cada mesa (1-indexadas, igual que CSS grid); --cs/--rs
+   cuantas celdas ocupa a lo ancho/alto. En pantallas angostas el plano se
+   transpone (5x10) para que quepa mejor en un celular vertical. */
+.plano{ display:grid; grid-template-columns:repeat(10,var(--celda)); grid-template-rows:repeat(6,var(--celda));
+        gap:calc(var(--celda)*.11) calc(var(--celda)*.11); justify-content:start; padding:4px; width:max-content; }
+.plano > .mesa{ grid-column:var(--c) / span var(--cs,1); grid-row:var(--r) / span var(--rs,1); }
+.plano > .celda-vacia{ grid-column:var(--c); grid-row:var(--r); }
+.plano.vertical{ grid-template-columns:repeat(6,var(--celda)); grid-template-rows:repeat(10,var(--celda)); }
+.plano.vertical > .mesa{ grid-column:var(--r) / span var(--rs,1); grid-row:var(--c) / span var(--cs,1); }
+.plano.vertical > .celda-vacia{ grid-column:var(--r); grid-row:var(--c); }
+.celda-vacia{ border:1px dashed var(--pergamino-2); border-radius:6px; pointer-events:none; }
+.mesa.pista{ border-style:dashed; background:var(--pergamino-2); color:var(--rosa-viejo); font-size:.68rem; }
+/* ---------- modo organizar mesas ---------- */
+.plano.organizando .mesa{ cursor:grab; touch-action:none; }
+.plano.organizando .mesa.decor{ cursor:grab; touch-action:none; border-style:dashed; }
+.plano.organizando .mesa:not(.sel-org):hover{ box-shadow:0 0 0 2px rgba(201,162,39,.4); }
+.mesa.sel-org{ box-shadow:0 0 0 3px var(--oro) !important; }
+.barra-organizar{ display:none; flex:0 0 auto; gap:8px; flex-wrap:wrap; align-items:center;
+  padding:10px 20px; background:#FFF7DA; border-bottom:1px solid var(--pergamino-2); }
+.barra-organizar.on{ display:flex; }
+.barra-organizar .aviso-modo{ font-size:.72rem; color:var(--rosa-viejo); margin-right:auto; }
+.mesa{ position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center;
+       cursor:pointer; border:2px solid var(--pergamino-2); background:var(--blanco);
+       transition:transform .12s, box-shadow .12s; user-select:none; }
+.mesa.redonda{ border-radius:50%; }
+.mesa.rectangular{ border-radius:8px; }
+.mesa.redonda, .mesa.rectangular{ cursor:grab; touch-action:none; }
+.mesa:hover{ transform:translateY(-2px); box-shadow:0 6px 14px rgba(51,57,31,.16); }
+.mesa.sel{ box-shadow:0 0 0 3px rgba(201,162,39,.45); }
+.mesa.llena{ border-color:var(--salvia); }
+.mesa.excede{ border-color:var(--alerta); }
+.mesa.arrastrando{ opacity:.45; cursor:grabbing; }
+.mesa.objetivo-ok{ box-shadow:0 0 0 4px rgba(139,154,91,.8) !important; }
+.mesa.objetivo-mal{ box-shadow:0 0 0 4px rgba(179,65,60,.8) !important; }
+.mesa .n{ font-family:var(--display); font-size:calc(var(--celda)*.205); font-weight:600; }
+.mesa .o{ font-size:calc(var(--celda)*.12); opacity:.75; margin-top:1px; }
+.mesa.excede .o{ color:var(--alerta); font-weight:600; }
+.mesa.decor{ border-style:dotted; cursor:default; font-size:.62rem; color:var(--rosa-viejo); background:transparent; }
+.mesa.decor:hover{ transform:none; box-shadow:none; }
+
+.detalle{ padding:14px 20px; background:var(--pergamino); border-bottom:1px solid var(--pergamino-2); }
+.detalle h3{ font-size:1.05rem; font-style:italic; }
+.detalle .cupo{ font-size:.72rem; color:var(--rosa-viejo); margin-top:2px; }
+.detalle .sentados{ margin-top:9px; display:flex; flex-wrap:wrap; gap:5px; }
+.pin{ font-size:.68rem; padding:3px 9px; border-radius:11px; color:#fff; display:inline-flex; align-items:center; gap:6px; }
+.pin button{ background:none; border:none; color:#fff; cursor:pointer; font-size:.78rem; opacity:.85; padding:0; line-height:1; }
+.pin button:hover{ opacity:1; }
+.pin select.mover, .ubic select.mover-mini{
+  background:rgba(255,255,255,.28); color:#fff; border:none; border-radius:9px;
+  font-family:inherit; font-size:.62rem; padding:2px 4px; cursor:pointer; max-width:120px;
+}
+.pin select.mover option, .ubic select.mover-mini option{ color:#000; }
+.pin .cuerpo, .ubic .cuerpo{ cursor:grab; touch-action:none; }
+.pin .ficha, .ubic .ficha{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:16px; height:16px; border-radius:50%; background:rgba(255,255,255,.35);
+  font-size:.6rem; font-weight:600; cursor:grab; touch-action:none; flex:0 0 auto;
+}
+.pin .cuerpo.arrastrando, .ubic .cuerpo.arrastrando,
+.pin .ficha.arrastrando, .ubic .ficha.arrastrando{ opacity:.4; cursor:grabbing; }
+
+.barra{ padding:12px 20px; border-bottom:1px solid var(--pergamino-2); }
+.barra input[type=text]{ width:100%; padding:9px 11px; border:1px solid var(--pergamino-2);
+        background:var(--pergamino); font-family:inherit; font-size:.86rem; border-radius:3px; }
+.filtros{ display:flex; gap:6px; margin-top:9px; flex-wrap:wrap; }
+.chip{ font-size:.66rem; padding:4px 11px; border-radius:20px; border:1px solid var(--pergamino-2);
+       background:var(--pergamino); cursor:pointer; color:var(--rosa-viejo); }
+.chip.on{ background:var(--salvia); border-color:var(--salvia); color:#fff; }
+
+.lista{ flex:1; min-height:0; overflow:auto; padding:2px 12px 24px; }
+.grupo{ padding:9px 8px; border-bottom:1px solid var(--pergamino-2); }
+.grupo .fila1{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.grupo .nom{ font-size:.88rem; font-weight:500; flex:1; }
+.grupo .cont{ font-size:.7rem; color:var(--rosa-viejo); white-space:nowrap; }
+.grupo .fila2{ display:flex; align-items:center; gap:6px; margin-top:6px; flex-wrap:wrap; }
+.mini{ width:24px; height:24px; border:1px solid var(--pergamino-2); background:var(--blanco);
+       border-radius:50%; cursor:pointer; font-size:.9rem; line-height:1; color:var(--tinta); }
+.mini:hover:not(:disabled){ border-color:var(--oro); color:var(--oro); }
+.mini:disabled{ opacity:.3; cursor:default; }
+.ubic{ font-size:.66rem; padding:2px 8px; border-radius:10px; color:#fff; display:inline-flex; align-items:center; gap:4px; }
+.sinmesa{ font-size:.66rem; color:var(--alerta); }
+.grupo.completo{ opacity:.6; }
+
+.vacio{ padding:26px 12px; text-align:center; color:var(--rosa-viejo); font-size:.84rem; }
+.aviso{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(16px);
+        background:var(--tinta); color:var(--pergamino); padding:9px 18px; border-radius:4px;
+        font-size:.76rem; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:60; }
+.aviso.ver{ opacity:1; transform:translateX(-50%) translateY(0); }
+.nota{ font-size:.7rem; color:var(--rosa-viejo); padding:6px 4px 0; }
+.tabs-mobile{ display:none; }
+@media (max-width:980px){
+  main{ flex-direction:column; }
+  .col-plano{ flex:1.15 1 0; min-height:0; border-right:none; border-bottom:1px solid var(--pergamino-2); padding:10px 12px 6px; }
+  .col-lista{ flex:1 1 0; min-height:0; max-width:none; width:100%; }
+  .tabs-mobile{ display:flex; gap:6px; padding:8px 16px 0; flex-wrap:wrap; background:var(--blanco); }
+  main.modo-croquis .col-plano{ flex:1 1 85%; }
+  main.modo-croquis .col-lista{ flex:1 1 15%; }
+  main.modo-lista .col-plano{ flex:1 1 15%; }
+  main.modo-lista .col-lista{ flex:1 1 85%; }
+}
+/* En pantallas chicas el encabezado y el resumen de números se comprimen
+   para dejarle la mayor parte de la altura al plano y a la lista. */
+@media (max-width:600px){
+  header{ padding:12px 16px 8px; gap:8px 12px; }
+  header h1{ font-size:1.3rem; }
+  .acciones{ gap:6px; }
+  .boton{ padding:6px 10px; font-size:.62rem; }
+  .resumen{ padding:8px 16px; display:grid; grid-template-columns:repeat(3,1fr); gap:6px 8px; }
+  .dato{ padding:0; margin:0; border-right:none; }
+  .dato .num{ font-size:1.05rem; }
+  .dato .lbl{ font-size:.54rem; }
+}
+
+/* ============================================================
+   TEMA XV AÑOS — victoriano en rosa baby + dorado + blanco
+   (mismo estilo que invitacion.html). Va al final del <style>
+   para ganarle a los valores que venían de la boda.
+   ============================================================ */
+:root{
+  --tinta:#5B3A41; --pergamino:#FFFAF8; --pergamino-2:#F5E1E7;
+  --rosa-viejo:#8F6B17; --oro:#C9A227; --salvia:#C9637F; --alerta:#B3413C;
+  --blanco:#FFFFFF; --blanco-calido:#FFFFFF;
+  --titulo:#A64D69; --vino:#F6C9D5;
+  --display:"Cormorant Garamond", serif; --texto:"Jost", sans-serif;
+  --capitular:"Cinzel Decorative", serif;
+  --sombra:0 18px 40px -18px rgba(150,80,100,.38);
+}
+body{
+  background-color:var(--pergamino);
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2714%27%20height%3D%2714%27%20viewBox%3D%270%200%2014%2014%27%3E%3Ccircle%20cx%3D%273%27%20cy%3D%277%27%20r%3D%271.6%27%20fill%3D%27%23C9A227%27%2F%3E%3Ccircle%20cx%3D%279%27%20cy%3D%277%27%20r%3D%271.6%27%20fill%3D%27%23C9A227%27%2F%3E%3C%2Fsvg%3E"), url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2714%27%20height%3D%2714%27%20viewBox%3D%270%200%2014%2014%27%3E%3Ccircle%20cx%3D%273%27%20cy%3D%277%27%20r%3D%271.6%27%20fill%3D%27%23C9A227%27%2F%3E%3Ccircle%20cx%3D%279%27%20cy%3D%277%27%20r%3D%271.6%27%20fill%3D%27%23C9A227%27%2F%3E%3C%2Fsvg%3E"), url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27160%27%20height%3D%27160%27%20viewBox%3D%270%200%20160%20160%27%3E%20%3Cg%20fill%3D%27none%27%20stroke%3D%27%23E3A9BA%27%20stroke-opacity%3D%27.26%27%20stroke-width%3D%271.3%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%20%3Cpath%20d%3D%27M80%2C14%20C70%2C24%2062%2C38%2068%2C52%20C72%2C60%2064%2C66%2058%2C60%20C52%2C54%2058%2C46%2064%2C50%27%2F%3E%20%3Cpath%20d%3D%27M68%2C52%20C56%2C40%2042%2C36%2030%2C42%20C42%2C46%2052%2C54%2068%2C52%20Z%27%2F%3E%20%3Cpath%20d%3D%27M80%2C58%20C64%2C60%2050%2C72%2052%2C88%20C54%2C100%2070%2C102%2072%2C92%20C73%2C86%2066%2C84%2064%2C88%27%2F%3E%20%3Cpath%20d%3D%27M80%2C104%20C72%2C114%2058%2C120%2046%2C116%20C40%2C114%2040%2C106%2046%2C106%27%2F%3E%20%3Cpath%20d%3D%27M80%2C128%20C70%2C132%2062%2C140%2064%2C150%27%2F%3E%20%3Cpath%20d%3D%27M54%2C74%20C44%2C72%2034%2C78%2032%2C88%20C40%2C84%2048%2C82%2054%2C74%20Z%27%2F%3E%3Cg%20transform%3D%27translate%28160%200%29%20scale%28-1%201%29%27%3E%3Cpath%20d%3D%27M80%2C14%20C70%2C24%2062%2C38%2068%2C52%20C72%2C60%2064%2C66%2058%2C60%20C52%2C54%2058%2C46%2064%2C50%27%2F%3E%20%3Cpath%20d%3D%27M68%2C52%20C56%2C40%2042%2C36%2030%2C42%20C42%2C46%2052%2C54%2068%2C52%20Z%27%2F%3E%20%3Cpath%20d%3D%27M80%2C58%20C64%2C60%2050%2C72%2052%2C88%20C54%2C100%2070%2C102%2072%2C92%20C73%2C86%2066%2C84%2064%2C88%27%2F%3E%20%3Cpath%20d%3D%27M80%2C104%20C72%2C114%2058%2C120%2046%2C116%20C40%2C114%2040%2C106%2046%2C106%27%2F%3E%20%3Cpath%20d%3D%27M80%2C128%20C70%2C132%2062%2C140%2064%2C150%27%2F%3E%20%3Cpath%20d%3D%27M54%2C74%20C44%2C72%2034%2C78%2032%2C88%20C40%2C84%2048%2C82%2054%2C74%20Z%27%2F%3E%3C%2Fg%3E%20%3Cpath%20d%3D%27M80%2C60%20C73%2C72%2073%2C88%2080%2C100%20C87%2C88%2087%2C72%2080%2C60%20Z%27%2F%3E%3Ccircle%20cx%3D%2780%27%20cy%3D%2780%27%20r%3D%273%27%2F%3E%3Cpath%20d%3D%27M80%2C104%20L80%2C128%27%2F%3E%20%3C%2Fg%3E%3C%2Fsvg%3E");
+  background-repeat:repeat-y, repeat-y, repeat;
+  background-position:left top, right top, top left;
+  background-size:14px 14px, 14px 14px, 180px 180px;
+}
+h1{ font-family:var(--capitular) !important; font-style:normal !important; font-weight:700 !important; color:var(--titulo); letter-spacing:.01em; }
+h2, h3{ color:var(--titulo); }
+.ojo-de-cerradura, header p.sub{ color:var(--rosa-viejo) !important; }
+.nav-sitio{ background:var(--vino) !important; border-bottom:2px solid var(--oro); }
+.nav-sitio a{ color:var(--tinta) !important; font-weight:500; border-right-color:rgba(201,162,39,.45) !important; }
+.nav-sitio a:hover{ background:var(--titulo) !important; color:#FFFFFF !important; }
+.boton{ border-radius:999px !important; }
+.boton:hover{ background:var(--oro); color:#FFFFFF; }
+.boton--solido{ background:var(--titulo) !important; border-color:var(--titulo) !important; color:#FFFFFF !important; }
+.boton--solido:hover{ background:var(--oro) !important; border-color:var(--oro) !important; }
+.carta, .tarjeta, .tarjeta-lugar, .fila-invitado{ border-radius:16px !important; outline:1px solid var(--oro); outline-offset:-6px; }
+
+header h1{ font-size:1.4rem; }
+.dato .num{ font-family:var(--capitular); font-weight:700; color:var(--titulo); }
+.barra input[type=text]{ border-radius:999px; }
+.rotulo-plano{ font-family:var(--capitular); color:var(--titulo); }
+</style>
+</head>
+<body>
+
+<script>
+const CONFIG = {
+  // Misma URL de Google Apps Script que en invitacion.html e index.html
+  urlConfirmaciones: "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT",
+  capacidadMesa: 10,      // cupo normal
+  excedentePermitido: 1   // una silla extra por mesa => 11
+};
+</script>
+
+<nav class="nav-sitio">
+  <a href="index.html">Dedicatorias</a>
+  <a href="invitacion.html">Invitación</a>
+  <a href="confirmacion.html">Confirmaciones</a>
+</nav>
+
+<header>
+  <div>
+    <p class="sub">Panel privado</p>
+    <h1>Croquis de mesas</h1>
+  </div>
+  <div class="acciones">
+    <button class="boton" id="btn-organizar" title="Mover mesas de lugar en el plano">▦ Organizar mesas</button>
+    <button class="boton" id="btn-importar-excel" title="Reemplazar la lista de invitados y su acomodo con el Excel de invitados">⇪ Importar Excel</button>
+    <input type="file" id="input-excel" accept=".xlsx" style="display:none">
+    <button class="boton" id="btn-reiniciar" title="Quitar a todos los invitados de sus mesas">Reiniciar acomodo</button>
+    <button class="boton" id="btn-deshacer" disabled title="Deshacer el último cambio (Ctrl+Z)">↶ Deshacer</button>
+    <button class="boton" id="btn-rehacer" disabled title="Rehacer (Ctrl+Y)">↷ Rehacer</button>
+    <button class="boton boton--solido" id="btn-guardar">Guardar</button>
+  </div>
+</header>
+
+<div class="resumen" id="resumen"></div>
+
+<div class="tabs-mobile" id="tabs-mobile">
+  <button class="chip on" data-modo="dividido">Dividido</button>
+  <button class="chip" data-modo="croquis">Ampliar croquis</button>
+  <button class="chip" data-modo="lista">Ampliar lista</button>
+</div>
+
+<div class="barra-organizar" id="barra-organizar">
+  <span class="aviso-modo">Modo organizar: arrastra cualquier mesa (o la pista de baile) a otra celda del plano.</span>
+  <button class="boton chico" id="btn-agregar-mesa">+ Agregar mesa</button>
+  <button class="boton chico" id="btn-quitar-mesa" disabled>Quitar mesa seleccionada</button>
+  <button class="boton chico" id="btn-rotar-novios" disabled>Rotar mesa de la quinceañera</button>
+  <button class="boton chico boton--solido" id="btn-salir-organizar">Salir</button>
+</div>
+
+<main>
+  <div class="col-plano">
+    <p class="rotulo-plano">Entrada del salón</p>
+    <div class="plano" id="plano"></div>
+    <p class="rotulo-plano">Escenario</p>
+    <p class="nota" id="nota-plano">Arrastra invitados o mesas para reacomodarlos. La fichita "1" mueve a una sola persona.</p>
+  </div>
+
+  <div class="col-lista">
+    <div class="detalle" id="detalle"><p class="cupo">Selecciona una mesa del croquis para empezar.</p></div>
+    <div class="barra">
+      <input type="text" id="buscar" placeholder="Buscar invitado…">
+      <div class="filtros" id="filtros"></div>
+    </div>
+    <div class="lista" id="lista"></div>
+  </div>
+</main>
+
+<div class="aviso" id="aviso"></div>
+
+<script>
+/* Rótulo con el que el Excel marca la mesa principal (la de la quinceañera).
+   El id interno de esa mesa sigue siendo "novios" porque así viene del
+   croquis de la boda; solo cambia lo que se ve. */
+const esMesaPrincipal = n => ["MESA QUINCEAÑERA","MESA QUINCEANERA","MESA PRINCIPAL","MESA NOVIOS"].includes(n);
+
+const SEED = {"mesas": [{"id": "t1", "numero": "1", "tipo": "redonda", "capacidad": 10, "col": 9, "row": 5}, {"id": "t9", "numero": "2", "tipo": "redonda", "capacidad": 10, "col": 5, "row": 5}, {"id": "t17", "numero": "3", "tipo": "redonda", "capacidad": 10, "col": 6, "row": 2}, {"id": "t20", "numero": "4", "tipo": "redonda", "capacidad": 10, "col": 5, "row": 6}, {"id": "t28", "numero": "5", "tipo": "redonda", "capacidad": 10, "col": 5, "row": 1}, {"id": "t2", "numero": "6", "tipo": "redonda", "capacidad": 10, "col": 6, "row": 1}, {"id": "t10", "numero": "7", "tipo": "redonda", "capacidad": 10, "col": 7, "row": 1}, {"id": "t18", "numero": "8", "tipo": "redonda", "capacidad": 10, "col": 8, "row": 1}, {"id": "t21", "numero": "9", "tipo": "redonda", "capacidad": 10, "col": 9, "row": 1}, {"id": "t29", "numero": "10", "tipo": "redonda", "capacidad": 10, "col": 10, "row": 1}, {"id": "t3", "numero": "11", "tipo": "redonda", "capacidad": 10, "col": 10, "row": 4}, {"id": "t11", "numero": "12", "tipo": "redonda", "capacidad": 10, "col": 9, "row": 4}, {"id": "t22", "numero": "13", "tipo": "redonda", "capacidad": 10, "col": 6, "row": 3}, {"id": "t30", "numero": "14", "tipo": "redonda", "capacidad": 10, "col": 6, "row": 4}, {"id": "t4", "numero": "15", "tipo": "redonda", "capacidad": 10, "col": 8, "row": 4}, {"id": "t12", "numero": "16", "tipo": "redonda", "capacidad": 10, "col": 7, "row": 4}, {"id": "t23", "numero": "17", "tipo": "redonda", "capacidad": 10, "col": 7, "row": 2}, {"id": "t5", "numero": "18", "tipo": "redonda", "capacidad": 10, "col": 8, "row": 2}, {"id": "t13", "numero": "19", "tipo": "redonda", "capacidad": 10, "col": 9, "row": 2}, {"id": "t24", "numero": "20", "tipo": "redonda", "capacidad": 10, "col": 10, "row": 2}, {"id": "t6", "numero": "21", "tipo": "redonda", "capacidad": 10, "col": 6, "row": 5}, {"id": "t14", "numero": "22", "tipo": "redonda", "capacidad": 10, "col": 10, "row": 6}, {"id": "t25", "numero": "23", "tipo": "redonda", "capacidad": 10, "col": 9, "row": 6}, {"id": "t31", "numero": "24", "tipo": "redonda", "capacidad": 10, "col": 8, "row": 6}, {"id": "t7", "numero": "25", "tipo": "redonda", "capacidad": 10, "col": 7, "row": 5}, {"id": "t15", "numero": "26", "tipo": "redonda", "capacidad": 10, "col": 8, "row": 5}, {"id": "t26", "numero": "27", "tipo": "redonda", "capacidad": 10, "col": 7, "row": 3}, {"id": "t32", "numero": "28", "tipo": "redonda", "capacidad": 10, "col": 8, "row": 3}, {"id": "t8", "numero": "29", "tipo": "redonda", "capacidad": 10, "col": 9, "row": 3}, {"id": "t16", "numero": "30", "tipo": "redonda", "capacidad": 10, "col": 10, "row": 3}, {"id": "t27", "numero": "31", "tipo": "redonda", "capacidad": 10, "col": 6, "row": 6}, {"id": "t33", "numero": "32", "tipo": "redonda", "capacidad": 10, "col": 7, "row": 6}, {"id": "t19", "numero": "33", "tipo": "redonda", "capacidad": 10, "col": 10, "row": 5}, {"id": "novios", "numero": "Quinceañera", "tipo": "rectangular", "capacidad": 6, "col": 1, "row": 3, "rotada": false}, {"id": "pastel", "numero": "Pastel", "tipo": "decor", "capacidad": 0, "col": 1, "row": 5}, {"id": "dulces", "numero": "Dulces", "tipo": "decor", "capacidad": 0, "col": 1, "row": 2}, {"id": "pista", "numero": "Pista de baile", "tipo": "decor", "capacidad": 0, "col": 3, "row": 3, "cs": 2, "rs": 2}, {"id": "mesa_extra_34", "numero": "34", "tipo": "redonda", "capacidad": 10, "col": 1, "row": 1}, {"id": "mesa_extra_35", "numero": "35", "tipo": "redonda", "capacidad": 10, "col": 2, "row": 1}, {"id": "mesa_extra_36", "numero": "36", "tipo": "redonda", "capacidad": 10, "col": 3, "row": 1}], "grupos": [], "asign": {}};
+
+/* 34 colores: uno por mesa (33 invitados + novios) */
+const COLORES = [
+  "#C0504D","#D2691E","#B8860B","#BDB76B","#8FBC5A","#6B8E23","#3CB371","#2E8B78",
+  "#20B2AA","#4A9BB5","#4682B4","#5B7FC4","#6A5ACD","#7B68A6","#8E6FB0","#A050A0",
+  "#B85C9E","#C06090","#C25B7A","#B04A5A","#A85848","#96703C","#8A8340","#7E9145",
+  "#5F9E6A","#4E9B8F","#3F8BA8","#4C79B0","#5E6BA8","#7A5F9E","#94569B","#A85D8C",
+  "#AE5A6E","#7A6A53"
+];
+
+const $ = (id)=>document.getElementById(id);
+const GRID_COLS = 10, GRID_ROWS = 6;
+const K_COL = .11, K_ROW = .11;
+
+let estado = null;
+let modoOrganizar = false;
+let mesaSelOrg = null;
+let mesaSel = null;
+let filtro = "todos";
+let busqueda = "";
+let sucio = false;
+let historial = [];
+let rehacerPila = [];
+const HISTORIAL_MAX = 30;
+
+const CUPO = CONFIG.capacidadMesa;
+const TOPE = CONFIG.capacidadMesa + CONFIG.excedentePermitido;
+
+/* ---------- utilidades ---------- */
+function esc(t){ const d=document.createElement("div"); d.textContent=t||""; return d.innerHTML; }
+function normalizar(t){
+  return (t||"").trim().toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+}
+function avisar(m){ const a=$("aviso"); a.textContent=m; a.classList.add("ver");
+  clearTimeout(a._t); a._t=setTimeout(()=>a.classList.remove("ver"),1500); }
+
+function mesasAsiento(){ return estado.mesas.filter(m=>m.tipo!=="decor"); }
+function mesaPorId(id){ return estado.mesas.find(m=>m.id===id); }
+function colorMesa(id){
+  const lista = mesasAsiento();
+  const i = lista.findIndex(m=>m.id===id);
+  if(i<0) return "#999";
+  if(id==="novios") return COLORES[COLORES.length-1];
+  return COLORES[i % (COLORES.length-1)];
+}
+function ocupacion(mesaId){
+  let s=0;
+  for(const gid in estado.asign){ s += (estado.asign[gid][mesaId]||0); }
+  return s;
+}
+function sentadosDe(gid){
+  const m = estado.asign[gid]||{};
+  return Object.values(m).reduce((a,b)=>a+b,0);
+}
+function pendientesDe(gid){
+  const g = estado.grupos.find(x=>x.id===gid);
+  return (g?g.total:0) - sentadosDe(gid);
+}
+
+/* ---------- persistencia ---------- */
+async function cargar(){
+  if(!CONFIG.urlConfirmaciones || CONFIG.urlConfirmaciones.startsWith("PEGA_AQUI")){
+    estado = JSON.parse(JSON.stringify(SEED));
+    avisar("Sin conexión configurada: usando datos locales");
+    render(); return;
+  }
+  try{
+    const r = await fetch(CONFIG.urlConfirmaciones + "?accion=croquis");
+    const d = await r.json();
+    if(d.ok && d.croquis && d.croquis.grupos && d.croquis.grupos.length){
+      estado = d.croquis;
+      // Las mesas guardadas en la hoja se respetan (así sí se guarda el
+      // reacomodo que se hace en "Organizar mesas"), PERO si vienen en el
+      // formato viejo (columnas con letras, de antes de la rejilla 10x6) no
+      // sirven con este código: en ese caso se reemplazan por las del
+      // archivo, una sola vez, para no romper el plano.
+      const mesasCompatibles = estado.mesas && estado.mesas.length && typeof estado.mesas[0].col === "number";
+      if(!mesasCompatibles) estado.mesas = JSON.parse(JSON.stringify(SEED.mesas));
+    } else {
+      estado = JSON.parse(JSON.stringify(SEED));
+      avisar("Primera vez: se cargó el acomodo inicial");
+    }
+  }catch(e){
+    estado = JSON.parse(JSON.stringify(SEED));
+    avisar("No se pudo conectar: usando datos locales");
+  }
+  if(!estado.asign) estado.asign = {};
+  render();
+}
+
+async function guardar(){
+  if(!CONFIG.urlConfirmaciones || CONFIG.urlConfirmaciones.startsWith("PEGA_AQUI")){
+    avisar("Falta configurar la URL para poder guardar"); return;
+  }
+  $("btn-guardar").disabled = true;
+  try{
+    const r = await fetch(CONFIG.urlConfirmaciones,{
+      method:"POST", headers:{"Content-Type":"text/plain"},
+      body: JSON.stringify({ accion:"guardarCroquis", croquis: estado })
+    });
+    const d = await r.json();
+    if(d.ok){ sucio=false; avisar("Acomodo guardado"); }
+    else avisar(d.error || "No se pudo guardar");
+  }catch(e){ avisar("No se pudo guardar: sin conexión"); }
+  $("btn-guardar").disabled = false;
+  renderResumen();
+}
+
+/* ---------- deshacer / rehacer ----------
+   Antes de cada cambio real (sentar, quitar, mover, intercambiar, organizar)
+   se guarda una copia de mesas+grupos+asign. "Deshacer" restaura la última
+   copia y manda el estado actual a la pila de "rehacer"; cualquier cambio
+   nuevo borra esa pila (ya no tiene sentido rehacer algo viejo). Los datos
+   guardados en la hoja no se tocan hasta que se aprieta Guardar, así que
+   deshacer/rehacer son completamente seguros. */
+function foto(){
+  return JSON.parse(JSON.stringify({ mesas: estado.mesas, grupos: estado.grupos, asign: estado.asign }));
+}
+function guardarHistorial(){
+  historial.push(foto());
+  if(historial.length > HISTORIAL_MAX) historial.shift();
+  rehacerPila = [];
+}
+function deshacer(){
+  if(!historial.length){ avisar("No hay nada que deshacer"); return; }
+  rehacerPila.push(foto());
+  const previo = historial.pop();
+  estado.mesas = previo.mesas;
+  estado.grupos = previo.grupos;
+  estado.asign = previo.asign;
+  sucio = true;
+  avisar("Se deshizo el último cambio");
+  render();
+}
+function rehacer(){
+  if(!rehacerPila.length){ avisar("No hay nada que rehacer"); return; }
+  historial.push(foto());
+  const siguiente = rehacerPila.pop();
+  estado.mesas = siguiente.mesas;
+  estado.grupos = siguiente.grupos;
+  estado.asign = siguiente.asign;
+  sucio = true;
+  avisar("Se rehizo el cambio");
+  render();
+}
+
+/* ---------- acciones ---------- */
+function sentar(gid){
+  if(!mesaSel){ avisar("Primero elige una mesa"); return; }
+  if(pendientesDe(gid)<=0) return;
+  const m = mesaPorId(mesaSel);
+  const tope = (m.id==="novios") ? (m.capacidad||TOPE) : TOPE;
+  if(ocupacion(mesaSel) >= tope){ avisar("Esa mesa ya llegó a su tope de "+tope); return; }
+  guardarHistorial();
+  if(!estado.asign[gid]) estado.asign[gid] = {};
+  estado.asign[gid][mesaSel] = (estado.asign[gid][mesaSel]||0)+1;
+  sucio=true; render();
+}
+function levantar(gid, mesaId){
+  const m = estado.asign[gid]; if(!m || !m[mesaId]) return;
+  guardarHistorial();
+  m[mesaId]--;
+  if(m[mesaId]<=0) delete m[mesaId];
+  if(Object.keys(m).length===0) delete estado.asign[gid];
+  sucio=true; render();
+}
+function vaciarMesa(mesaId){
+  guardarHistorial();
+  for(const gid in estado.asign){
+    if(estado.asign[gid][mesaId]){
+      delete estado.asign[gid][mesaId];
+      if(Object.keys(estado.asign[gid]).length===0) delete estado.asign[gid];
+    }
+  }
+  sucio=true; render();
+}
+/* Quita a TODOS los invitados de TODAS las mesas (no borra grupos ni mesas,
+   solo el acomodo). Como cualquier otro cambio, se puede deshacer. */
+function reiniciarAcomodo(){
+  if(!confirm("¿Quitar a todos los invitados de sus mesas? El acomodo actual se puede deshacer después si te equivocas.")) return;
+  guardarHistorial();
+  estado.asign = {};
+  mesaSel = null;
+  sucio = true;
+  avisar("Se reinició el acomodo: nadie quedó sentado");
+  render();
+}
+/* Todas las celdas de la rejilla de 10x5 que no ocupa ninguna mesa (contando
+   el ancho/alto real de cada una: la mesa de novios y la pista de baile
+   pueden ocupar más de una celda). Sirve para "Agregar mesa" y para saber
+   si al arrastrar algo cabe en su celda destino. */
+function celdasOcupadas(excluirId){
+  const ocupadas = new Set();
+  estado.mesas.forEach(m=>{
+    if(m.id===excluirId) return;
+    const pos = posicionRejilla(m);
+    for(let dc=0; dc<pos.cs; dc++){
+      for(let dr=0; dr<pos.rs; dr++){
+        ocupadas.add((pos.c+dc)+","+(pos.r+dr));
+      }
+    }
+  });
+  return ocupadas;
+}
+function celdasLibresPlano(){
+  const ocupadas = celdasOcupadas();
+  const libres = [];
+  for(let row=1; row<=GRID_ROWS; row++){
+    for(let col=1; col<=GRID_COLS; col++){
+      if(!ocupadas.has(col+","+row)) libres.push({col, row});
+    }
+  }
+  return libres;
+}
+function agregarMesa(){
+  const libres = celdasLibresPlano();
+  if(!libres.length){ avisar("No queda espacio libre en el plano para otra mesa"); return; }
+  guardarHistorial();
+  const celda = libres[0];
+  const numeros = estado.mesas.filter(m=>m.tipo==="redonda").map(m=>Number(m.numero)).filter(n=>!isNaN(n));
+  const numero = String((numeros.length ? Math.max(...numeros) : 0) + 1);
+  estado.mesas.push({ id:"t_extra_"+Date.now(), numero, tipo:"redonda", capacidad:CUPO, col:celda.col, row:celda.row });
+  sucio = true;
+  avisar(`Se agregó la mesa ${numero}`);
+  render();
+}
+/* Quita una mesa redonda del plano. Si tenía gente sentada, esas personas
+   quedan sin mesa asignada (no se borran, solo pierden su lugar) — se pide
+   confirmar antes por si acaso. */
+function quitarMesa(mesaId){
+  const m = mesaPorId(mesaId);
+  if(!m || m.tipo!=="redonda") return;
+  const occ = ocupacion(mesaId);
+  if(occ>0 && !confirm(`La mesa ${m.numero} tiene ${occ} persona(s) sentadas; se quedarán sin mesa asignada. ¿Quitarla de todas formas?`)) return;
+  guardarHistorial();
+  for(const gid in estado.asign){
+    if(estado.asign[gid][mesaId]){
+      delete estado.asign[gid][mesaId];
+      if(Object.keys(estado.asign[gid]).length===0) delete estado.asign[gid];
+    }
+  }
+  estado.mesas = estado.mesas.filter(x=>x.id!==mesaId);
+  if(mesaSelOrg===mesaId) mesaSelOrg=null;
+  if(mesaSel===mesaId) mesaSel=null;
+  sucio = true;
+  avisar(`Se quitó la mesa ${m.numero}`);
+  render();
+}
+function rotarNovios(){
+  const m = mesaPorId("novios");
+  if(!m) return;
+  guardarHistorial();
+  m.rotada = !m.rotada;
+  sucio = true;
+  avisar("Se giró la mesa de la quinceañera");
+  render();
+}
+function topeDe(mesaId){
+  const m = mesaPorId(mesaId);
+  return (m.id==="novios") ? (m.capacidad||TOPE) : TOPE;
+}
+/* Mueve gente de un grupo desde `origenId` hacia `destinoId`. Sin `cantidad`
+   mueve a todos los que hay ahí (usado por el selector "Mover a…" y al
+   arrastrar el cuerpo completo del pin); con `cantidad` mueve solo esos
+   (usado al arrastrar la fichita "1"). Si no cabe todo lo pedido, mueve lo
+   que quepa y deja el resto donde estaba (nunca se pierde gente). */
+function moverGrupo(gid, origenId, destinoId, cantidad){
+  if(!destinoId || origenId===destinoId) return;
+  const disponible = (estado.asign[gid]||{})[origenId] || 0;
+  if(disponible<=0) return;
+  const pedir = (cantidad==null) ? disponible : Math.min(cantidad, disponible);
+  const libres = topeDe(destinoId) - ocupacion(destinoId);
+  if(libres<=0){ avisar("Esa mesa ya llegó a su tope"); render(); return; }
+  const mover = Math.min(pedir, libres);
+
+  guardarHistorial();
+  estado.asign[gid][origenId] -= mover;
+  if(estado.asign[gid][origenId]<=0) delete estado.asign[gid][origenId];
+  estado.asign[gid][destinoId] = (estado.asign[gid][destinoId]||0) + mover;
+  if(Object.keys(estado.asign[gid]).length===0) delete estado.asign[gid];
+
+  const g = estado.grupos.find(x=>x.id===gid);
+  const destMesa = mesaPorId(destinoId), origenMesa = mesaPorId(origenId);
+  const quedan = disponible - mover;
+  let msg;
+  if(mover < pedir) msg = `Solo cupieron ${mover} de ${g.nombre} en la mesa ${destMesa.numero} (quedaron ${quedan} en la mesa ${origenMesa.numero})`;
+  else if(quedan > 0) msg = `Se movieron ${mover} de ${g.nombre} a la mesa ${destMesa.numero} (quedan ${quedan} en la mesa ${origenMesa.numero})`;
+  else msg = `${g.nombre} se movió completo a la mesa ${destMesa.numero}`;
+  avisar(msg);
+  sucio=true; render();
+}
+function opcionesMover(origenId){
+  return mesasAsiento().filter(m=>m.id!==origenId).map(m=>{
+    const libres = topeDe(m.id) - ocupacion(m.id);
+    if(libres<=0) return null;
+    return `<option value="${m.id}">Mesa ${esc(m.numero)} (${libres} libre${libres===1?"":"s"})</option>`;
+  }).filter(Boolean).join("");
+}
+
+/* ---------- arrastrar con Pointer Events (no la API clásica de drag de
+   HTML5, que no funciona en celulares): el mismo código sirve para mouse,
+   lápiz y dedo. Un movimiento corto se trata como clic normal; solo si el
+   puntero se desplaza más de 8px se considera arrastre de verdad.
+   Hay dos tipos de arrastre, con el mismo motor:
+     - tipo "mesa": se agarra una mesa completa del plano y se suelta sobre
+       otra para INTERCAMBIAR a todos sus invitados entre las dos.
+     - tipo "persona": se agarra un pin (o su fichita "1") de la lista o del
+       detalle de una mesa, y se suelta sobre la mesa destino para mover a
+       ese grupo (completo o de a uno) para allá. */
+let arrastre = null;
+
+function puedeIntercambiarMesas(aId, bId){
+  const ma = mesaPorId(aId), mb = mesaPorId(bId);
+  if(!ma || !mb || ma.tipo==="decor" || mb.tipo==="decor") return false;
+  return ocupacion(bId) <= topeDe(aId) && ocupacion(aId) <= topeDe(bId);
+}
+
+function intercambiarMesas(aId, bId){
+  if(!puedeIntercambiarMesas(aId,bId)){ avisar("No caben completos si se intercambian esas mesas"); return; }
+  guardarHistorial();
+  for(const gid in estado.asign){
+    const mapa = estado.asign[gid];
+    const a = mapa[aId]||0, b = mapa[bId]||0;
+    if(!a && !b) continue;
+    if(b) mapa[aId]=b; else delete mapa[aId];
+    if(a) mapa[bId]=a; else delete mapa[bId];
+  }
+  const ma = mesaPorId(aId), mb = mesaPorId(bId);
+  if(mesaSel===aId) mesaSel=bId; else if(mesaSel===bId) mesaSel=aId;
+  sucio = true;
+  avisar(`Se intercambiaron los invitados de la mesa ${ma.numero} y la mesa ${mb.numero}`);
+  render();
+}
+
+function objetivoValido(ctx, mesaEl){
+  if(!mesaEl || mesaEl.dataset.mesaId===ctx.origenId) return null;
+  if(ctx.tipo==="persona" && mesaPorId(mesaEl.dataset.mesaId).tipo==="decor") return null;
+  return mesaEl;
+}
+function objetivoEsBueno(ctx, destinoId){
+  return ctx.tipo==="mesa"
+    ? puedeIntercambiarMesas(ctx.origenId, destinoId)
+    : (topeDe(destinoId) - ocupacion(destinoId)) > 0;
+}
+
+function iniciarArrastre(e, el, ctx){
+  if(e.pointerType==="mouse" && e.button!==0) return;
+  arrastre = Object.assign({ origenEl: el, startX:e.clientX, startY:e.clientY, moviendo:false, hoverEl:null }, ctx);
+  el.setPointerCapture(e.pointerId);
+  el.addEventListener("pointermove", moverArrastre);
+  el.addEventListener("pointerup", soltarArrastre, {once:true});
+  el.addEventListener("pointercancel", cancelarArrastre, {once:true});
+}
+function moverArrastre(e){
+  if(!arrastre) return;
+  const dx=e.clientX-arrastre.startX, dy=e.clientY-arrastre.startY;
+  if(!arrastre.moviendo && Math.hypot(dx,dy) > 8){
+    arrastre.moviendo = true;
+    arrastre.origenEl.classList.add("arrastrando");
+  }
+  if(!arrastre.moviendo) return;
+
+  if(arrastre.tipo==="posicion"){
+    arrastre.celdaDestino = celdaDesdePunto(e.clientX, e.clientY);
+    return;
+  }
+
+  const bajo = document.elementFromPoint(e.clientX, e.clientY);
+  const mesaEl = bajo && bajo.closest(".mesa[data-mesa-id]");
+  const destinoValido = objetivoValido(arrastre, mesaEl);
+  if(destinoValido !== arrastre.hoverEl){
+    if(arrastre.hoverEl) arrastre.hoverEl.classList.remove("objetivo-ok","objetivo-mal");
+    arrastre.hoverEl = destinoValido;
+    if(destinoValido){
+      const ok = objetivoEsBueno(arrastre, destinoValido.dataset.mesaId);
+      destinoValido.classList.add(ok?"objetivo-ok":"objetivo-mal");
+    }
+  }
+}
+function soltarArrastre(e){
+  if(!arrastre) return;
+  arrastre.origenEl.removeEventListener("pointermove", moverArrastre);
+  arrastre.origenEl.classList.remove("arrastrando");
+  if(arrastre.hoverEl) arrastre.hoverEl.classList.remove("objetivo-ok","objetivo-mal");
+  const ctx = arrastre;
+  arrastre = null;
+  if(ctx.moviendo){
+    if(ctx.tipo==="posicion"){
+      if(ctx.celdaDestino) moverMesaPosicion(ctx.origenId, ctx.celdaDestino);
+    } else if(ctx.hoverEl){
+      const destinoId = ctx.hoverEl.dataset.mesaId;
+      if(ctx.tipo==="mesa") intercambiarMesas(ctx.origenId, destinoId);
+      else moverGrupo(ctx.gid, ctx.origenId, destinoId, ctx.cantidad);
+    }
+  } else if(ctx.tipo==="mesa"){
+    mesaSel = (mesaSel===ctx.origenId) ? null : ctx.origenId;
+    render();
+  } else if(ctx.tipo==="posicion"){
+    seleccionarMesaOrg(ctx.origenId);
+  }
+}
+/* A qué celda de la rejilla (col,row lógicos, no de pantalla) cae un punto
+   del mouse/dedo. Como col/row del arrastre "posicion" siempre son los
+   lógicos (los que se guardan en la mesa), si el plano está transpuesto
+   (.vertical) hay que voltear el resultado. */
+function celdaDesdePunto(clientX, clientY){
+  const plano = $("plano");
+  const rect = plano.getBoundingClientRect();
+  const celdaPx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--celda"));
+  const vertical = plano.classList.contains("vertical");
+  const nCols = vertical ? GRID_ROWS : GRID_COLS;
+  const nRows = vertical ? GRID_COLS : GRID_ROWS;
+  const paso = celdaPx * (1 + K_COL);
+  const xRel = clientX - rect.left - 4, yRel = clientY - rect.top - 4;
+  const col = Math.min(nCols, Math.max(1, Math.floor(xRel/paso) + 1));
+  const row = Math.min(nRows, Math.max(1, Math.floor(yRel/paso) + 1));
+  return vertical ? { col: row, row: col } : { col, row };
+}
+/* Mueve una mesa (o la pista de baile) a la celda donde se soltó. Si esa
+   celda ya la ocupa otra mesa, se intercambian de lugar; si está libre pero
+   la mesa no cabe completa ahí (por su tamaño o el borde de la rejilla), no
+   se hace nada y se avisa. */
+function moverMesaPosicion(origenId, celdaDestino){
+  const m = mesaPorId(origenId);
+  if(!m) return;
+  const posOrigen = posicionRejilla(m);
+  const otra = estado.mesas.find(x=>{
+    if(x.id===origenId) return false;
+    const p = posicionRejilla(x);
+    return celdaDestino.col>=p.c && celdaDestino.col<p.c+p.cs && celdaDestino.row>=p.r && celdaDestino.row<p.r+p.rs;
+  });
+  if(otra){
+    guardarHistorial();
+    const posOtra = posicionRejilla(otra);
+    m.col = posOtra.c; m.row = posOtra.r;
+    otra.col = posOrigen.c; otra.row = posOrigen.r;
+    sucio = true;
+    avisar(`Se intercambiaron de lugar la mesa ${m.numero} y ${otra.numero}`);
+    render();
+    return;
+  }
+  const cs = posOrigen.cs, rs = posOrigen.rs;
+  const col = Math.min(celdaDestino.col, GRID_COLS - cs + 1);
+  const row = Math.min(celdaDestino.row, GRID_ROWS - rs + 1);
+  const ocupadas = celdasOcupadas(origenId);
+  for(let dc=0; dc<cs; dc++){
+    for(let dr=0; dr<rs; dr++){
+      if(ocupadas.has((col+dc)+","+(row+dr))){ avisar("Ahí no cabe la mesa completa"); return; }
+    }
+  }
+  guardarHistorial();
+  m.col = col; m.row = row;
+  sucio = true;
+  avisar(`Se movió la mesa ${m.numero}`);
+  render();
+}
+function seleccionarMesaOrg(id){
+  mesaSelOrg = (mesaSelOrg===id) ? null : id;
+  render();
+}
+function actualizarBarraOrganizar(){
+  if(!modoOrganizar) return;
+  const m = mesaSelOrg ? mesaPorId(mesaSelOrg) : null;
+  $("btn-quitar-mesa").disabled = !(m && m.tipo==="redonda");
+  $("btn-rotar-novios").disabled = !(m && m.id==="novios");
+}
+function alternarOrganizar(activar){
+  modoOrganizar = activar;
+  mesaSelOrg = null;
+  mesaSel = null;
+  $("barra-organizar").classList.toggle("on", activar);
+  $("plano").classList.toggle("organizando", activar);
+  render();
+}
+function cancelarArrastre(){
+  if(!arrastre) return;
+  arrastre.origenEl.classList.remove("arrastrando");
+  if(arrastre.hoverEl) arrastre.hoverEl.classList.remove("objetivo-ok","objetivo-mal");
+  arrastre = null;
+}
+/* Conecta el arrastre de personas: [data-drag-gid] es el cuerpo del pin
+   (mueve a todos los que tenga ese grupo ahí) y [data-drag-uno] es la
+   fichita "1" (mueve solo a una persona). Se usa igual en el detalle de una
+   mesa y en la lista general de invitados. */
+function activarArrastrePersona(contenedor){
+  contenedor.querySelectorAll("[data-drag-gid]").forEach(el=>{
+    el.addEventListener("pointerdown", e=>iniciarArrastre(e, el, {
+      tipo:"persona", gid: el.dataset.dragGid, origenId: el.dataset.dragOrigen, cantidad: null
+    }));
+  });
+  contenedor.querySelectorAll("[data-drag-uno]").forEach(el=>{
+    el.addEventListener("pointerdown", e=>iniciarArrastre(e, el, {
+      tipo:"persona", gid: el.dataset.dragUno, origenId: el.dataset.dragOrigen, cantidad: 1
+    }));
+  });
+}
+
+/* ---------- importar Excel de invitados ----------
+   Hace en el navegador lo mismo que actualizar_seed.py: lee el .xlsx con las
+   "pistas" de mesas (nombre, cantidad y a veces un excedente), arma
+   grupos+asign nuevos y los pone en la mesa del salón CON ESE MISMO NÚMERO
+   (el número que trae cada bloque en la hoja es el número real de la mesa,
+   así lo pidió el cliente — ya no se reparte por cercanía a la mesa de
+   novios). Si el Excel usa un número que el plano no tiene, se agrega esa
+   mesa en una celda libre. El resto del plano no se toca, solo grupos/asign.
+   Los invitados agregados a mano porque confirmaron pero no venían en el
+   Excel de invitados (origen: "confirmacion") se conservan, con su acomodo si
+   ya tenían uno.
+
+   OJO — las columnas de las pistas (TRACKS) CAMBIAN de un archivo a otro
+   (quien arma el Excel no usa siempre la misma plantilla — van 3 formatos distintos en 3
+   archivos). Si un import falla o los nombres salen revueltos, lo primero
+   que hay que revisar es si se movieron las columnas otra vez, y actualizar
+   TRACKS aquí abajo.
+   La mesa de novios ya no tiene columnas fijas propias: se identifica por
+   ser el único bloque que trae un renglón con el texto "MESA NOVIOS".
+   Y esto se guarda como una LISTA de eventos, nunca por número, porque dos
+   pistas ya han cerrado alguna vez con el mismo número por error. */
+const TRACKS_EXCEL = [
+  ["M","N","O"],
+  ["Q","R","S"],
+  ["V","W","X"],
+  ["Y","Z","AA"],
+];
+function colVal(ws, col, row){
+  const celda = ws[col+row];
+  return celda ? celda.v : null;
+}
+async function procesarExcelMesas(file){
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, {type:"array"});
+  const ws = wb.Sheets["Hoja1"] || wb.Sheets[wb.SheetNames[0]];
+  const rango = XLSX.utils.decode_range(ws["!ref"]);
+  const maxRow = rango.e.r + 1;
+
+  const eventos = [];
+  for(const [ncol,ccol,ecol] of TRACKS_EXCEL){
+    let pendiente = [];
+    for(let r=1; r<=maxRow; r++){
+      const nv = colVal(ws,ncol,r);
+      if(nv===null || nv===undefined || nv==="") continue;
+      if(typeof nv === "number"){
+        eventos.push({ num:nv, fila:r, pista:ncol, miembros:pendiente });
+        pendiente = [];
+      } else {
+        const cv = colVal(ws,ccol,r) || 0;
+        const ev = ecol ? (colVal(ws,ecol,r) || 0) : 0;
+        pendiente.push([String(nv).trim(), cv+ev]);
+      }
+    }
+    if(pendiente.length) throw new Error(`La pista ${ncol} quedó sin terminar (falta el número de mesa al final).`);
+  }
+
+  const noviosIdx = eventos.findIndex(e=>e.miembros.some(([n])=>esMesaPrincipal(n)));
+  if(noviosIdx<0) throw new Error("No se encontró ningún bloque con 'MESA QUINCEAÑERA' (o 'MESA PRINCIPAL') — revisa las columnas del Excel (ver TRACKS_EXCEL).");
+  const noviosEv = eventos.splice(noviosIdx,1)[0];
+  const otras = eventos;
+
+  const limpiar = miembros => miembros.filter(([n,c])=>!(esMesaPrincipal(n) && c===0));
+  const noviosMembers = limpiar(noviosEv.miembros);
+  otras.forEach(e=>{ e.miembros = limpiar(e.miembros); });
+
+  const noviosMesa = mesaPorId("novios");
+
+  // el número que trae cada bloque ES el número de mesa del salón que le
+  // toca a ese grupo.
+  const vistos = new Map();
+  for(const e of otras){
+    const numero = String(Math.trunc(e.num));
+    if(vistos.has(numero)) throw new Error(`La mesa ${numero} aparece dos veces en el Excel (fila ${vistos.get(numero)} y fila ${e.fila}) — hay que resolver cuál es la correcta antes de importar.`);
+    vistos.set(numero, e.fila);
+    e.numeroSite = numero;
+  }
+
+  function mesaConNumero(numero){
+    let m = estado.mesas.find(x=>x.tipo==="redonda" && x.numero===numero);
+    if(m) return m;
+    const libres = celdasLibresPlano();
+    if(!libres.length) throw new Error(`No cabe la mesa ${numero}: no quedan celdas libres en el plano.`);
+    const {col,row} = libres[0];
+    m = { id:"mesa_extra_"+numero, numero, tipo:"redonda", capacidad:CUPO, col, row };
+    estado.mesas.push(m);
+    return m;
+  }
+  const mesasAgregadas = [];
+  for(const e of otras){
+    const yaExistia = estado.mesas.some(x=>x.tipo==="redonda" && x.numero===e.numeroSite);
+    mesaConNumero(e.numeroSite);
+    if(!yaExistia) mesasAgregadas.push(e.numeroSite);
+  }
+
+  const nuevosGrupos = [];
+  const nuevoAsign = {};
+  let gid = 1;
+  function agregar(nombre, total, mesaId, origen){
+    const g = { id:"g"+gid, nombre, total };
+    if(origen) g.origen = origen;
+    nuevosGrupos.push(g);
+    nuevoAsign[g.id] = { [mesaId]: total };
+    gid++;
+  }
+  noviosMembers.forEach(([nombre,total])=>agregar(nombre,total,"novios"));
+  for(const e of otras){
+    const mesaSite = estado.mesas.find(x=>x.tipo==="redonda" && x.numero===e.numeroSite);
+    e.miembros.forEach(([nombre,total])=>agregar(nombre,total,mesaSite.id));
+  }
+
+  const extras = estado.grupos.filter(g=>g.origen==="confirmacion");
+  extras.forEach(g=>{
+    const nuevoId = "g"+gid;
+    const g2 = { id:nuevoId, nombre:g.nombre, total:g.total, origen:"confirmacion" };
+    nuevosGrupos.push(g2);
+    const asignPrevio = estado.asign[g.id];
+    if(asignPrevio) nuevoAsign[nuevoId] = JSON.parse(JSON.stringify(asignPrevio));
+    gid++;
+  });
+
+  noviosMesa.capacidad = Math.max(noviosMesa.capacidad, noviosMembers.length);
+
+  const totalPersonas = nuevosGrupos.reduce((s,g)=>s+g.total,0);
+  const ocup = {};
+  Object.values(nuevoAsign).forEach(mapa=>Object.entries(mapa).forEach(([mid,cant])=>{ ocup[mid]=(ocup[mid]||0)+cant; }));
+  const excedidas = [];
+  estado.mesas.forEach(m=>{
+    if(m.tipo==="decor") return;
+    const occ = ocup[m.id]||0;
+    const tope = (m.id==="novios") ? (m.capacidad||TOPE) : TOPE;
+    if(occ>tope) excedidas.push(`Mesa ${m.numero} (${occ}/${tope})`);
+  });
+
+  return { grupos: nuevosGrupos, asign: nuevoAsign, totalPersonas, excedidas, extrasConservados: extras.length, mesasAgregadas };
+}
+
+/* ---------- render ---------- */
+function render(){ renderResumen(); renderPlano(); renderDetalle(); renderFiltros(); renderLista(); ajustarCelda(); actualizarBarraOrganizar(); }
+
+function renderResumen(){
+  $("btn-deshacer").disabled = historial.length===0;
+  $("btn-rehacer").disabled = rehacerPila.length===0;
+  const total = estado.grupos.reduce((s,g)=>s+g.total,0);
+  const sentados = estado.grupos.reduce((s,g)=>s+sentadosDe(g.id),0);
+  const redondas = estado.mesas.filter(m=>m.tipo==="redonda");
+  const usadas = redondas.filter(m=>ocupacion(m.id)>0).length;
+  const excede = mesasAsiento().filter(m=>{
+    const t = (m.id==="novios") ? (m.capacidad||TOPE) : TOPE;
+    return ocupacion(m.id) > t;
+  }).length;
+  $("resumen").innerHTML = `
+    <div class="dato"><div class="num">${total}</div><div class="lbl">Personas en total</div></div>
+    <div class="dato"><div class="num">${sentados}</div><div class="lbl">Ya sentadas</div></div>
+    <div class="dato ${total-sentados>0?"alerta":""}"><div class="num">${total-sentados}</div><div class="lbl">Sin lugar</div></div>
+    <div class="dato"><div class="num">${usadas} / ${redondas.length}</div><div class="lbl">Mesas en uso</div></div>
+    <div class="dato ${excede>0?"alerta":""}"><div class="num">${excede}</div><div class="lbl">Mesas pasadas de tope</div></div>
+    <div class="dato"><div class="num" style="font-size:1rem;padding-top:7px">${sucio?"Sin guardar":"Guardado"}</div><div class="lbl">Estado</div></div>
+  `;
+}
+
+/* Posición lógica de cada mesa en la rejilla de 10x5: columna (c), fila (r)
+   y cuántas columnas/filas ocupa (cs/rs). col/row ya son números 1-10 / 1-5
+   directos. La mesa de novios se puede girar (rotada:true) para ocupar 2
+   columnas en vez de 2 filas; la pista de baile trae su propio tamaño
+   (cs/rs) porque es más grande que una mesa normal. */
+function posicionRejilla(m){
+  if(m.id==="novios"){
+    return m.rotada
+      ? { c:m.col, r:m.row, cs:2, rs:1 }
+      : { c:m.col, r:m.row, cs:1, rs:2 };
+  }
+  return { c:m.col, r:m.row, cs:m.cs||1, rs:m.rs||1 };
+}
+
+function renderPlano(){
+  const p = $("plano"); p.innerHTML="";
+
+  estado.mesas.forEach(m=>{
+    const d = document.createElement("div");
+    const decor = m.tipo==="decor";
+    d.className = "mesa " + (m.tipo==="redonda"?"redonda":m.tipo==="rectangular"?"rectangular":"decor");
+    if(m.id==="pista") d.classList.add("pista");
+    const pos = posicionRejilla(m);
+    d.style.setProperty("--c", pos.c);
+    d.style.setProperty("--r", pos.r);
+    d.style.setProperty("--cs", pos.cs);
+    d.style.setProperty("--rs", pos.rs);
+    d.dataset.mesaId = m.id;
+
+    if(decor){
+      d.innerHTML = `<div class="n" style="font-size:.7rem">${esc(m.numero)}</div>`;
+    } else {
+      const occ = ocupacion(m.id);
+      const tope = (m.id==="novios") ? (m.capacidad||TOPE) : TOPE;
+      const cupo = (m.id==="novios") ? (m.capacidad||CUPO) : CUPO;
+      if(occ>0){
+        d.style.background = colorMesa(m.id);
+        d.style.color = "#fff";
+        d.classList.add("llena");
+      }
+      if(occ>tope) d.classList.add("excede");
+      if(m.id===mesaSel) d.classList.add("sel");
+      d.innerHTML = `<div class="n">${esc(m.numero)}</div><div class="o">${occ}/${cupo}</div>`;
+    }
+
+    if(modoOrganizar){
+      if(m.id===mesaSelOrg) d.classList.add("sel-org");
+      d.addEventListener("pointerdown", e=>iniciarArrastre(e, d, {tipo:"posicion", origenId:m.id}));
+    } else if(!decor){
+      d.addEventListener("pointerdown", e=>iniciarArrastre(e, d, {tipo:"mesa", origenId:m.id}));
+    }
+    p.appendChild(d);
+  });
+
+  // En modo organizar se dibuja además cada celda vacía de la rejilla (10x5),
+  // solo para que se vea dónde hay espacio — no reciben clic ni arrastre,
+  // eso ya lo resuelve celdaDesdePunto() con la posición del mouse/dedo.
+  if(modoOrganizar){
+    celdasLibresPlano().forEach(({col,row})=>{
+      const v = document.createElement("div");
+      v.className = "celda-vacia";
+      v.style.setProperty("--c", col);
+      v.style.setProperty("--r", row);
+      p.appendChild(v);
+    });
+  }
+}
+
+function renderDetalle(){
+  const c = $("detalle");
+  if(!mesaSel){ c.innerHTML = `<p class="cupo">Selecciona una mesa del croquis para empezar.</p>`; return; }
+  const m = mesaPorId(mesaSel);
+  const occ = ocupacion(mesaSel);
+  const cupo = (m.id==="novios") ? (m.capacidad||CUPO) : CUPO;
+  const tope = (m.id==="novios") ? (m.capacidad||TOPE) : TOPE;
+  const col = colorMesa(mesaSel);
+
+  const pins = estado.grupos.filter(g=>(estado.asign[g.id]||{})[mesaSel])
+    .map(g=>{
+      const cnt = estado.asign[g.id][mesaSel];
+      return `<span class="pin" style="background:${col}">
+        <span class="cuerpo" data-drag-gid="${g.id}" data-drag-origen="${mesaSel}" title="Arrastra para mover a los ${cnt}">${esc(g.nombre)} · ${cnt}</span>
+        ${cnt>1?`<span class="ficha" data-drag-uno="${g.id}" data-drag-origen="${mesaSel}" title="Arrastra para mover solo a 1">1</span>`:""}
+        <button title="Quitar uno" data-quitar="${g.id}">−</button>
+        <select class="mover" data-mover="${g.id}" data-origen="${mesaSel}" title="Mover todo el grupo a otra mesa">
+          <option value="">Mover a…</option>${opcionesMover(mesaSel)}
+        </select></span>`;
+    }).join("");
+
+  c.innerHTML = `
+    <h3><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${col};margin-right:7px"></span>
+      Mesa ${esc(m.numero)}</h3>
+    <p class="cupo">${occ} de ${cupo} lugares${occ>cupo?` · ${occ-cupo} de excedente`:""}${occ>tope?" · PASADA DE TOPE":""}</p>
+    <div class="sentados">${pins || '<span class="cupo">Todavía no hay nadie sentado aquí.</span>'}</div>
+    ${occ>0?`<button class="boton chico" id="btn-vaciar" style="margin-top:10px">Vaciar mesa</button>`:""}
+  `;
+  c.querySelectorAll("[data-quitar]").forEach(b=>
+    b.addEventListener("click", ()=>levantar(b.dataset.quitar, mesaSel)));
+  c.querySelectorAll("[data-mover]").forEach(s=>
+    s.addEventListener("change", ()=>{ if(s.value) moverGrupo(s.dataset.mover, s.dataset.origen, s.value); }));
+  activarArrastrePersona(c);
+  const bv = $("btn-vaciar");
+  if(bv) bv.addEventListener("click", ()=>vaciarMesa(mesaSel));
+}
+
+function renderFiltros(){
+  const f = [["todos","Todos"],["pendientes","Con pendientes"],["sentados","Ya sentados"]];
+  $("filtros").innerHTML = f.map(([k,l])=>`<span class="chip ${filtro===k?"on":""}" data-f="${k}">${l}</span>`).join("");
+  $("filtros").querySelectorAll("[data-f]").forEach(c=>
+    c.addEventListener("click", ()=>{ filtro=c.dataset.f; renderFiltros(); renderLista(); }));
+}
+
+function renderLista(){
+  let gs = estado.grupos.slice();
+  if(busqueda) gs = gs.filter(g=>g.nombre.toLowerCase().includes(busqueda));
+  if(filtro==="pendientes") gs = gs.filter(g=>pendientesDe(g.id)>0);
+  if(filtro==="sentados")   gs = gs.filter(g=>sentadosDe(g.id)>0);
+
+  if(!gs.length){ $("lista").innerHTML = `<p class="vacio">Sin resultados.</p>`; return; }
+
+  $("lista").innerHTML = gs.map(g=>{
+    const pend = pendientesDe(g.id);
+    const mapa = estado.asign[g.id]||{};
+    const ubic = Object.keys(mapa).map(mid=>{
+      const mm = mesaPorId(mid);
+      const cnt = mapa[mid];
+      return `<span class="ubic" style="background:${colorMesa(mid)}">
+        <span class="cuerpo" data-drag-gid="${g.id}" data-drag-origen="${mid}" title="Arrastra para mover a los ${cnt}">Mesa ${esc(mm?mm.numero:"?")} · ${cnt}</span>
+        ${cnt>1?`<span class="ficha" data-drag-uno="${g.id}" data-drag-origen="${mid}" title="Arrastra para mover solo a 1">1</span>`:""}
+        <button class="mini" style="width:16px;height:16px;border:none;background:transparent;color:#fff;font-size:.7rem"
+                data-quitar="${g.id}" data-mesa="${mid}" title="Quitar uno">−</button>
+        <select class="mover-mini" data-mover="${g.id}" data-origen="${mid}" title="Mover todo el grupo a otra mesa">
+          <option value="">➜ mover</option>${opcionesMover(mid)}
+        </select></span>`;
+    }).join("");
+    return `<div class="grupo ${pend===0?"completo":""}">
+      <div class="fila1">
+        <span class="nom">${esc(g.nombre)}</span>
+        <span class="cont">${sentadosDe(g.id)}/${g.total}</span>
+      </div>
+      <div class="fila2">
+        <button class="mini" data-sentar="${g.id}" ${pend<=0||!mesaSel?"disabled":""} title="Sentar uno en la mesa elegida">+</button>
+        ${ubic || (pend>0?`<span class="sinmesa">${pend} sin lugar</span>`:"")}
+      </div>
+    </div>`;
+  }).join("");
+
+  $("lista").querySelectorAll("[data-sentar]").forEach(b=>
+    b.addEventListener("click", ()=>sentar(b.dataset.sentar)));
+  $("lista").querySelectorAll("[data-quitar][data-mesa]").forEach(b=>
+    b.addEventListener("click", ()=>levantar(b.dataset.quitar, b.dataset.mesa)));
+  $("lista").querySelectorAll("[data-mover]").forEach(s=>
+    s.addEventListener("change", ()=>{ if(s.value) moverGrupo(s.dataset.mover, s.dataset.origen, s.value); }));
+  activarArrastrePersona($("lista"));
+}
+
+/* ---------- ajustar el tamaño de las mesas al espacio real disponible ----------
+   Se mide el ancho y el alto que de verdad tiene .col-plano (con su padding,
+   y el rótulo de entrada/escenario y la nota de abajo descontados) y se
+   calcula --celda para que la rejilla completa (10x5, o transpuesta 5x10 en
+   pantallas angostas) quepa exacta, sin pedir scroll ni horizontal ni
+   vertical. overflow:auto en .col-plano queda como red de seguridad. */
+function ajustarCelda(){
+  const cont = document.querySelector(".col-plano");
+  if(!cont) return;
+  const nota = document.getElementById("nota-plano");
+  const cs = getComputedStyle(cont);
+  const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+  const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  let extraAlto = nota ? nota.offsetHeight + 12 : 0;
+  cont.querySelectorAll(".rotulo-plano").forEach(r => extraAlto += r.offsetHeight);
+  const anchoDisp = cont.clientWidth - padX - 4;
+  const altoDisp = cont.clientHeight - padY - extraAlto - 8;
+  const PAD_PLANO = 8, MIN = 30;
+  // "Horizontal" = 10 columnas x 5 filas (la forma normal, apaisada, de un
+  // salón). "Vertical" = la misma rejilla transpuesta (5x10) para que quepa
+  // mejor en un celular en vertical.
+  const celdaHorizontal = Math.min(
+    (anchoDisp - PAD_PLANO) / (GRID_COLS + (GRID_COLS-1)*K_COL),
+    (altoDisp  - PAD_PLANO) / (GRID_ROWS + (GRID_ROWS-1)*K_ROW)
+  );
+  const celdaVertical = Math.min(
+    (anchoDisp - PAD_PLANO) / (GRID_ROWS + (GRID_ROWS-1)*K_COL),
+    (altoDisp  - PAD_PLANO) / (GRID_COLS + (GRID_COLS-1)*K_ROW)
+  );
+  const usarVertical = celdaVertical > celdaHorizontal;
+  $("plano").classList.toggle("vertical", usarVertical);
+  const celda = Math.max(MIN, Math.min(84, usarVertical ? celdaVertical : celdaHorizontal) * .97);
+  document.documentElement.style.setProperty("--celda", Math.floor(celda) + "px");
+}
+let _timerCelda = null;
+window.addEventListener("resize", ()=>{ clearTimeout(_timerCelda); _timerCelda = setTimeout(ajustarCelda, 120); });
+
+/* En celular, "Dividido/Ampliar croquis/Ampliar lista" le dan más alto a una
+   zona u otra (ambas siguen visibles, pero una se encoge). En pantallas
+   grandes estos botones ni se muestran. */
+document.querySelectorAll("#tabs-mobile [data-modo]").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    document.querySelectorAll("#tabs-mobile [data-modo]").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+    const main = document.querySelector("main");
+    main.classList.remove("modo-croquis","modo-lista");
+    if(b.dataset.modo!=="dividido") main.classList.add("modo-"+b.dataset.modo);
+    ajustarCelda();
+  });
+});
+
+/* ---------- eventos ---------- */
+$("buscar").addEventListener("input", e=>{ busqueda = e.target.value.trim().toLowerCase(); renderLista(); });
+$("btn-guardar").addEventListener("click", guardar);
+$("btn-deshacer").addEventListener("click", deshacer);
+$("btn-rehacer").addEventListener("click", rehacer);
+$("btn-reiniciar").addEventListener("click", reiniciarAcomodo);
+$("btn-agregar-mesa").addEventListener("click", agregarMesa);
+$("btn-quitar-mesa").addEventListener("click", ()=>{ if(mesaSelOrg) quitarMesa(mesaSelOrg); });
+$("btn-rotar-novios").addEventListener("click", rotarNovios);
+$("btn-importar-excel").addEventListener("click", ()=> $("input-excel").click());
+$("input-excel").addEventListener("change", async e=>{
+  const file = e.target.files[0];
+  e.target.value = "";
+  if(!file) return;
+  if(!confirm("Esto va a reemplazar la lista de invitados y su acomodo de mesas con lo que traiga el Excel (los invitados que agregaste a mano porque confirmaron y no venían en el Excel se conservan). Si el Excel trae más mesas que el plano, se agregan las que falten. ¿Continuar?")) return;
+  guardarHistorial();
+  try{
+    const resultado = await procesarExcelMesas(file);
+    estado.grupos = resultado.grupos;
+    estado.asign = resultado.asign;
+    mesaSel = null;
+    sucio = true;
+    render();
+    let msg = `Se importaron ${resultado.grupos.length} grupos (${resultado.totalPersonas} personas).`;
+    if(resultado.mesasAgregadas.length) msg += ` Se agregaron ${resultado.mesasAgregadas.length} mesa(s) nueva(s) al plano.`;
+    if(resultado.extrasConservados) msg += ` Se conservaron ${resultado.extrasConservados} invitados agregados a mano.`;
+    if(resultado.excedidas.length) msg += ` Mesas pasadas de tope: ${resultado.excedidas.join(", ")}.`;
+    alert(msg + "\n\nRevisa el acomodo y aprieta Guardar cuando esté bien.");
+  }catch(err){
+    historial.pop();
+    alert("No se pudo importar el Excel: " + err.message);
+  }
+});
+$("btn-organizar").addEventListener("click", ()=>alternarOrganizar(true));
+$("btn-salir-organizar").addEventListener("click", ()=>alternarOrganizar(false));
+window.addEventListener("keydown", e=>{
+  if(!(e.ctrlKey || e.metaKey)) return;
+  const tag = document.activeElement && document.activeElement.tagName;
+  if(tag==="INPUT" || tag==="TEXTAREA" || tag==="SELECT") return;
+  const k = e.key.toLowerCase();
+  if(k==="z"){ e.preventDefault(); deshacer(); }
+  else if(k==="y"){ e.preventDefault(); rehacer(); }
+});
+window.addEventListener("beforeunload", e=>{ if(sucio){ e.preventDefault(); e.returnValue=""; } });
+
+cargar();
+</script>
+</body>
+</html>
