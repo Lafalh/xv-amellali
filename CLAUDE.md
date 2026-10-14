@@ -25,10 +25,11 @@ misma estructura, mismo bloque `CONFIG`, mismo backend de Apps Script.
 
 - **No debe aparecer ninguna foto de la quinceañera** ni de su vestido (el vestido es rosa).
 - **Ilustración que mandó la clienta** (quinceañera de espaldas en acuarela, rosas, mariposas,
-  medallón "Mis 15 Años"): `img/xv-ilustracion.webp` (1232×2193). Es un dibujo genérico, no foto.
-  La original venía muy comprimida (855 px de una captura), así que: se recortó la franja gris,
-  se **borró el medallón** de la imagen (relleno con la acuarela de alrededor), se limpió el ruido
-  JPEG, se amplió 1.5x y se le dio nitidez. El medallón se **redibujó en SVG** (`SVG_MEDALLON_15`,
+  medallón "Mis 15 Años"): `img/xv-ilustracion.webp` (1642×2924, ~130 KB). Es un dibujo genérico,
+  no foto. La original venía muy comprimida (855 px de una captura), así que: se recortó la franja
+  gris, se **borró el medallón** de la imagen (relleno con la acuarela de alrededor) y se amplió con
+  **IA (Real-ESRGAN, modelo `realesrgan-x4plus`)** a 4x y se guardó a 2x. El modelo `-anime` la
+  volvía caricatura: no usarlo para acuarelas. Real-ESRGAN está en `C:\Users\LAFALH\Tools\realesrgan`. El medallón se **redibujó en SVG** (`SVG_MEDALLON_15`,
   en `.il-medallon`, mismas coordenadas que el original) para que tiara, aro y "Mis 15 Años" se
   vean nítidos. Va en `invitacion.html` como tarjeta `.ilustracion` con la frase encima, en la zona
   blanca de la izquierda (tamaños en `cqw`).
