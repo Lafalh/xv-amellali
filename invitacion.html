@@ -346,6 +346,30 @@ a{color:inherit;}
 }
 .nombre-completo{ font-family:var(--etiqueta); text-transform:uppercase; letter-spacing:.2em; font-size:.68rem; margin-top:20px; opacity:.8; }
 
+/* tarjeta con la ilustración que mandó la clienta (proporción 821×1462).
+   El texto se acomoda en la zona blanca de la izquierda; todos los tamaños
+   van en cqw (% del ancho de la tarjeta) para que se vea igual en celular
+   y en computadora. */
+.ilustracion{
+  position:relative; container-type:inline-size;
+  width:min(100%, 440px); aspect-ratio:821/1462; margin:0 auto;
+  background:url("img/xv-ilustracion.webp") center/cover no-repeat;
+  border-radius:var(--radio-tarjeta);
+  outline:1.5px solid var(--oro); outline-offset:-9px;
+  box-shadow:var(--sombra);
+}
+.ilustracion-texto{
+  position:absolute; left:8%; top:39%; width:56%;
+  display:flex; flex-direction:column; align-items:center; text-align:center;
+}
+.il-etiqueta{ font-family:var(--etiqueta); font-size:2.4cqw; letter-spacing:.18em; text-transform:uppercase; color:var(--oro-texto); line-height:1.5; }
+.il-script{ font-family:var(--script); font-size:7cqw; color:var(--oro-texto); line-height:1.1; margin-top:1.5cqw; }
+.il-nombre{ font-family:var(--capitular); font-weight:700; font-size:9.4cqw; margin-top:1.5cqw; color:var(--titulo); line-height:1.05; }
+.il-divisor{ width:34cqw; height:6cqw; color:var(--oro); margin:1.5cqw auto; }
+.il-divisor svg{ width:100%; height:100%; }
+.ilustracion .cita{ font-family:var(--texto); font-style:italic; font-size:4.4cqw; line-height:1.45; color:var(--tinta); margin:0; }
+.ilustracion .nombre-completo{ font-size:2.2cqw; margin-top:3cqw; color:var(--titulo); opacity:1; }
+
 .calendario{
   max-width:290px; margin:38px auto 4px;
   background:var(--blanco-calido); color:var(--tinta);
@@ -660,12 +684,19 @@ a{color:inherit;}
     <svg class="hero-flecha" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
   </section>
 
-  <!-- FRASE + CALENDARIO -->
+  <!-- FRASE SOBRE LA ILUSTRACIÓN + CALENDARIO
+       La ilustración (img/xv-ilustracion.webp) la mandó la clienta; el texto
+       va encima, en la zona blanca de la izquierda. No es una foto de la
+       quinceañera: es un dibujo genérico. -->
   <section class="seccion envoltura centro">
-    <div class="reveal">
-      <div class="grabado" data-grabado="libro"></div>
-      <p class="cita" id="txt-cita"></p>
-      <p class="nombre-completo" id="txt-nombre-completo"></p>
+    <div class="ilustracion reveal" role="img" aria-label="Ilustración de una quinceañera de espaldas con vestido rosa, rosas y mariposas">
+      <div class="ilustracion-texto">
+        <p class="il-etiqueta">Con la bendición de Dios y de mi familia</p>
+        <p class="il-nombre" id="txt-nombre-ilustracion"></p>
+        <div class="il-divisor" data-divisor></div>
+        <p class="cita" id="txt-cita"></p>
+        <p class="nombre-completo" id="txt-nombre-completo"></p>
+      </div>
     </div>
     <div class="calendario reveal" id="cont-calendario"></div>
   </section>
@@ -1211,6 +1242,7 @@ function pintarContenido(){
 
   // Frase
   $("txt-cita").textContent = CONFIG.cita;
+  $("txt-nombre-ilustracion").textContent = CONFIG.nombreQuinceañera;
   $("txt-nombre-completo").textContent = CONFIG.nombreCompleto;
 
   // Misa y fiesta

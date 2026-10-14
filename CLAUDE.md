@@ -24,6 +24,10 @@ misma estructura, mismo bloque `CONFIG`, mismo backend de Apps Script.
 ## Reglas de la clienta
 
 - **No debe aparecer ninguna foto de la quinceañera** ni de su vestido (el vestido es rosa).
+- **Ilustración que mandó la clienta** (quinceañera de espaldas en acuarela, rosas, mariposas,
+  medallón "Mis 15 Años"): `img/xv-ilustracion.webp` (recortada de su captura, 821×1462). Es un
+  dibujo genérico, no foto. Va en `invitacion.html` como tarjeta `.ilustracion` con la frase
+  encima, en la zona blanca de la izquierda (tamaños en `cqw`).
 - Estilo: **época victoriana** con marco ovalado dorado, rosas, corazones y corona
   (según la imagen de referencia). Colores: **rosa baby + dorado + blanco**
   (al principio era rojo vino como la referencia; se cambió a petición).
