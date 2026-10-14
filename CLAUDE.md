@@ -51,16 +51,36 @@ misma estructura, mismo bloque `CONFIG`, mismo backend de Apps Script.
 | `invitacion.html` | **La que se entrega: versión combinada** de los dos diseños. |
 | `invitacion-marco.html` | Diseño 1 (se conserva): portada con marco ovalado, tarjetas, esquineros. |
 | `invitacion-victoriana.html` | Diseño 2 (se conserva): estilo de https://eventday.ar/cumple/modelo-victorian/ — sobre con sello, filigranas, grabados, línea de tiempo. |
-| `google-apps-script.gs` | Backend (copiado de la boda). Hoja `Confirmaciones`: `Fecha \| Nombre \| Asiste \| Pases \| Adultos \| Niños \| Mensaje`. |
+| `google-apps-script.gs` | Backend. Pestaña **`Invitados`** (se crea sola): `ID \| Fecha \| Nombre \| Teléfono \| Adultos \| Niños \| Total \| Mensaje \| Estado \| Actualizado`. Pestaña `Croquis` (JSON). |
+
+## Lista de invitados: una sola, ligada por ID
+
+Decisión de la clienta: **un solo link para todos** y **cada invitado se registra al confirmar**
+(no hay lista previa). Para que los paneles no se desincronicen (problema de la boda, donde todo
+se ligaba por el texto del nombre):
+
+- La invitación genera un **ID** de 8 caracteres al confirmar y lo guarda en el celular
+  (`localStorage` clave `xv-amellali-invitado`). Si la persona vuelve a confirmar desde ese celular,
+  ve "Ya confirmaste como…", el formulario viene lleno y se **actualiza su misma fila** (upsert por ID).
+- Al confirmar recibe su link `mi-confirmacion.html?id=ID` (botón "Ver mi lugar" + QR).
+- WhatsApp opcional en el formulario → en el panel de invitados sale botón **WhatsApp** con mensaje
+  armado (mesa + link). 10 dígitos → se antepone 52.
+- **Todos los paneles leen `?accion=invitados`** y el croquis guarda `asign[ID]`. El croquis NO guarda
+  la lista: la reconstruye al cargar (`sincronizarConInvitados`), conserva los agregados **a mano**
+  (`origen:"manual"`, botón "+ Agregar invitado", ej. familia que no confirma), y libera lugares de
+  eliminados o de quien bajó su número de personas.
+- Duplicados (misma persona desde dos celulares): el panel de invitados los marca "¿duplicado?"
+  (mismo nombre normalizado) y tiene **Eliminar** → `Estado = Eliminado` en la hoja (no borra la fila).
+- El importador de Excel de la boda quedó oculto en el croquis.
 
 ### Paneles de administración (copiados de la boda y adaptados)
 
 | Archivo | Qué es |
 |---|---|
-| `index.html` | Panel principal (solo organizadores): carrusel de dedicatorias + lista de confirmaciones con **Adultos / Niños / Total**. |
-| `croquis-mesas.html` | Acomodo de mesas (misma lógica que la boda, ver su CLAUDE.md). La mesa principal se llama "Quinceañera" (su id interno sigue siendo `novios`). El Excel puede marcarla como `MESA QUINCEAÑERA`, `MESA PRINCIPAL` o `MESA NOVIOS`. |
-| `confirmacion.html` | Lista de invitados del croquis con "Copiar link" / "Vista previa" hacia `mi-confirmacion.html`. |
-| `mi-confirmacion.html` | Lo que ve cada invitado con su link (`?invitado=Nombre`): su mesa, Misa y Recepción. Sin aviso de cambio de sede. |
+| `index.html` | Panel principal (solo organizadores): carrusel de dedicatorias + tabla de invitados con **WhatsApp / Adultos / Niños / Total**. |
+| `croquis-mesas.html` | Acomodo de mesas (misma lógica que la boda, ver su CLAUDE.md), con la lista sincronizada de `Invitados`. La mesa principal se llama "Quinceañera" (su id interno sigue siendo `novios`). |
+| `confirmacion.html` | Panel **Invitados**: todos con su mesa, filtros (sin mesa / posibles duplicados), Vista previa, Copiar link, WhatsApp, Eliminar. |
+| `mi-confirmacion.html` | Lo que ve cada invitado con su link (`?id=ID`; `?invitado=Nombre` sigue funcionando): su mesa, Misa y Recepción. |
 
 Los cuatro llevan al final del `<style>` un bloque **"TEMA XV AÑOS"** que sobreescribe los
 colores/fuentes de la boda (rosa baby, dorado, Cinzel Decorative, damasco, puntos laterales,
@@ -103,7 +123,7 @@ Ornamentos generados en JS como SVG: `SVG_MARCO`, `SVG_FILIGRANA`, `DAMASCO`, `E
 
 ## Pendiente
 
-- Crear hoja de Google (con las 7 columnas de arriba) + desplegar `google-apps-script.gs` y pegar
+- Crear hoja de Google (vacía: la pestaña `Invitados` se crea sola) + desplegar `google-apps-script.gs` y pegar
   la URL `/exec` en `CONFIG.urlConfirmaciones` de los tres HTML (hoy es un placeholder: el
   formulario "confirma" pero no guarda nada).
 - La URL `/exec` también va en `CONFIG.urlConfirmaciones` de `index.html`, `croquis-mesas.html`,

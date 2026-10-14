@@ -416,7 +416,7 @@ a{color:inherit;}
 .form-rsvp{ text-align:left; margin-top:26px; }
 .campo{ margin-bottom:18px; }
 .campo label{ display:block; font-family:var(--etiqueta); font-size:.7rem; letter-spacing:.06em; color:var(--tinta); margin-bottom:7px; }
-.campo input[type=text], .campo textarea, .campo select{
+.campo input[type=text], .campo input[type=tel], .campo textarea, .campo select{
   width:100%; padding:13px 16px; font-family:var(--texto); font-size:1.08rem;
   border:1px solid transparent; border-radius:12px;
   background:var(--pergamino-2); color:var(--tinta);
@@ -509,6 +509,13 @@ a{color:inherit;}
 .yt-oculto{ position:fixed; left:-400px; bottom:0; width:200px; height:200px; opacity:0; pointer-events:none; overflow:hidden; }
 /* el botón de música sube para no chocar con el botón flotante de confirmar */
 .musica-btn{ bottom:86px !important; border:1px solid var(--oro) !important; }
+
+/* -------- ya confirmó antes desde este celular -------- */
+.ya-confirmado{
+  margin:18px auto 0; max-width:420px; padding:12px 16px; border-radius:12px;
+  background:#FDF0F3; border:1px solid #E48AA3; color:#5B3A41; font-size:1rem; line-height:1.4; text-align:center;
+}
+.ya-confirmado.oculto{ display:none; }
 </style>
 </head>
 <body class="cerrada">
@@ -645,10 +652,16 @@ a{color:inherit;}
           <p class="fecha-limite" id="txt-fecha-limite"></p>
         </div>
 
+        <p class="ya-confirmado oculto" id="aviso-ya-confirmado"></p>
+
         <form class="form-rsvp" id="form-rsvp">
           <div class="campo">
             <label for="in-nombre">Tu nombre completo *</label>
             <input type="text" id="in-nombre" required placeholder="Nombre y apellido">
+          </div>
+          <div class="campo">
+            <label for="in-telefono">Tu WhatsApp (opcional)</label>
+            <input type="tel" id="in-telefono" inputmode="tel" autocomplete="tel" placeholder="Para mandarte tu número de mesa">
           </div>
           <div class="campo" id="campo-pases">
             <label>¿Cuántos asistirán? (incluyéndote)</label>
@@ -671,9 +684,13 @@ a{color:inherit;}
         <div class="confirmacion" id="confirmacion">
           <p class="ojo-de-cerradura">¡Listo!</p>
           <p style="font-family:var(--capitular); font-weight:700; color:var(--titulo); font-size:1.35rem; margin:10px 0;" id="txt-confirmacion-titulo"></p>
-          <p style="opacity:.85;">Guarda este código para el día del evento.</p>
+          <p style="opacity:.85;">Guarda este código o el botón de abajo: ahí verás tu mesa en cuanto esté asignada.</p>
           <div class="qr-caja"><img id="qr-confirmacion" alt="Código QR de confirmación"></div>
           <p id="txt-confirmacion-pases" style="font-size:1.2rem;"></p>
+          <div class="fila-botones" style="margin-top:6px;">
+            <a class="boton boton--solido" id="lnk-mi-mesa" target="_blank" rel="noopener">Ver mi lugar</a>
+            <button type="button" class="boton" id="btn-corregir">Corregir mi respuesta</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1321,6 +1338,27 @@ function iniciarRSVP(){
   selNinos.addEventListener("change", actualizarPersonas);
   actualizarPersonas();
 
+  // Ya confirmó antes desde este celular: se rellena para que pueda corregir
+  const previo = leerGuardado();
+  if (previo && previo.id){
+    $("in-nombre").value = previo.nombre || "";
+    $("in-telefono").value = previo.telefono || "";
+    $("in-mensaje").value = previo.mensaje || "";
+    selAdultos.value = String(Math.min(previo.adultos || 1, maxPases)); selAdultos.dispatchEvent(new Event("change"));
+    selNinos.value = String(previo.ninos || 0); selNinos.dispatchEvent(new Event("change"));
+    $("aviso-ya-confirmado").textContent = `Ya confirmaste como ${previo.nombre}. Si algo cambió, corrige tus datos y vuelve a enviar: se actualiza tu misma confirmación.`;
+    $("aviso-ya-confirmado").classList.remove("oculto");
+    $("btn-confirmar").textContent = "Actualizar confirmación";
+  }
+
+  $("btn-corregir").addEventListener("click", () => {
+    $("confirmacion").classList.remove("visible");
+    $("form-rsvp").classList.remove("oculto");
+    $("btn-confirmar").disabled = false;
+    $("btn-confirmar").textContent = "Actualizar confirmación";
+    $("aviso-rsvp").textContent = "";
+  });
+
   $("form-rsvp").addEventListener("submit", async (ev) => {
     ev.preventDefault();
     const nombre = $("in-nombre").value.trim();
@@ -1333,7 +1371,7 @@ function iniciarRSVP(){
     $("btn-confirmar").disabled = true;
     $("aviso-rsvp").textContent = "Enviando...";
 
-    const datos = { nombre, asiste: "si", pases, adultos, ninos, mensaje, fecha: new Date().toISOString() };
+    const datos = { accion: "confirmar", id: idInvitado(), nombre, telefono: $("in-telefono").value.trim(), asiste: "si", pases, adultos, ninos, mensaje, fecha: new Date().toISOString() };
 
     try {
       if (CONFIG.urlConfirmaciones && !CONFIG.urlConfirmaciones.startsWith("PEGA_AQUI")) {
@@ -1347,6 +1385,7 @@ function iniciarRSVP(){
       } else {
         console.warn("CONFIG.urlConfirmaciones no está configurado todavía. Revisa google-apps-script.gs.");
       }
+      recordarConfirmacion(datos);
       mostrarConfirmacion(datos);
     } catch (err) {
       $("aviso-rsvp").textContent = "Hubo un problema al enviar. Intenta de nuevo.";
@@ -1361,12 +1400,44 @@ function textoPersonas(d){
   return partes.join(" y ");
 }
 
+/* ---------- ID del invitado ----------
+   Cada invitado se registra al confirmar. Su ID se genera aquí y se guarda
+   en su celular (localStorage), así si vuelve a confirmar se ACTUALIZA su
+   misma fila en la hoja en vez de crear otra, y su link de mesa
+   (mi-confirmacion.html?id=ID) sirve siempre. */
+const CLAVE_INVITADO = "xv-amellali-invitado";
+let idEnMemoria = null;
+function leerGuardado(){
+  try { return JSON.parse(localStorage.getItem(CLAVE_INVITADO) || "null"); } catch (e) { return null; }
+}
+function idInvitado(){
+  const g = leerGuardado();
+  if (g && g.id) return g.id;
+  if (!idEnMemoria){
+    const letras = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";   // sin 0/O ni 1/I/L para que no se confundan
+    idEnMemoria = Array.from({ length: 8 }, () => letras[Math.floor(Math.random() * letras.length)]).join("");
+  }
+  return idEnMemoria;
+}
+function recordarConfirmacion(datos){
+  try {
+    localStorage.setItem(CLAVE_INVITADO, JSON.stringify({
+      id: datos.id, nombre: datos.nombre, telefono: datos.telefono,
+      adultos: datos.adultos, ninos: datos.ninos, mensaje: datos.mensaje
+    }));
+  } catch (e) {}
+}
+function linkMiMesa(){
+  return new URL("mi-confirmacion.html?id=" + encodeURIComponent(idInvitado()), location.href).href;
+}
+
 function mostrarConfirmacion(datos){
   $("form-rsvp").classList.add("oculto");
   $("confirmacion").classList.add("visible");
   $("txt-confirmacion-titulo").textContent = `¡Tu lugar está confirmado, ${datos.nombre}!`;
   $("txt-confirmacion-pases").textContent = textoPersonas(datos);
-  const contenidoQR = `Confirmado: ${datos.nombre} · ${textoPersonas(datos)} · XV ${CONFIG.nombreQuinceañera}`;
+  const contenidoQR = linkMiMesa();
+  $("lnk-mi-mesa").href = contenidoQR;
   $("qr-confirmacion").src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=5B3A41&bgcolor=FFFFFF&data=${encodeURIComponent(contenidoQR)}`;
 }
 

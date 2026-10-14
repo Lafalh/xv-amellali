@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Confirmaciones · XV de Amellali</title>
+<title>Invitados · XV de Amellali</title>
 <meta name="robots" content="noindex, nofollow">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -128,6 +128,19 @@ header h1{ font-size:1.5rem; }
 .pastilla-mesa{ background:var(--vino); border-color:var(--vino); }
 .pastilla-mesa .n{ color:var(--titulo); font-weight:600; }
 .barra input[type=text]{ border-radius:999px; padding:10px 16px; }
+
+/* -------- lista ligada por ID -------- */
+.filtros{ display:flex; gap:6px; margin-top:9px; flex-wrap:wrap; }
+.chip{ font-size:.66rem; letter-spacing:.06em; text-transform:uppercase; padding:5px 12px; border-radius:999px;
+       border:1px solid var(--pergamino-2); background:var(--blanco); color:var(--rosa-viejo); cursor:pointer; }
+.chip.on{ background:var(--titulo); border-color:var(--titulo); color:#fff; }
+.etiqueta-fila{ font-size:.58rem; letter-spacing:.06em; text-transform:uppercase; padding:2px 8px; border-radius:999px;
+                background:var(--pergamino-2); color:var(--rosa-viejo); margin-left:6px; vertical-align:middle; font-weight:500; }
+.etiqueta-fila.alerta{ background:#FBE3E1; color:var(--alerta); }
+.posible-dup{ border-color:#E8B4B0 !important; }
+.mensaje-fila{ font-family:var(--display); font-style:italic; font-size:.95rem; margin-top:6px; opacity:.85; }
+.boton--peligro{ border-color:#D9A3A0 !important; color:var(--alerta) !important; }
+.boton--peligro:hover{ background:var(--alerta) !important; color:#fff !important; }
 </style>
 </head>
 <body>
@@ -141,6 +154,7 @@ header h1{ font-size:1.5rem; }
 <script>
 const CONFIG = {
   urlConfirmaciones: "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT",
+  nombreQuinceanera: "Amellali",
   // Nombre del archivo con la página personalizada de cada invitado.
   paginaInvitado: "mi-confirmacion.html"
 };
@@ -148,8 +162,8 @@ const CONFIG = {
 
 <header>
   <div>
-    <p class="sub">Panel privado</p>
-    <h1>Confirmaciones</h1>
+    <p class="sub">Panel privado · un invitado = una confirmación</p>
+    <h1>Invitados</h1>
   </div>
   <div class="acciones">
     <a class="boton" href="invitacion.html" target="_blank" rel="noopener" title="Abrir la invitación tal como la ven los invitados">Ver invitación</a>
@@ -159,7 +173,8 @@ const CONFIG = {
 <div class="resumen" id="resumen"></div>
 
 <div class="barra">
-  <input type="text" id="buscar" placeholder="Buscar invitado…">
+  <input type="text" id="buscar" placeholder="Buscar invitado o teléfono…">
+  <div class="filtros" id="filtros"></div>
 </div>
 
 <div id="estado" class="estado">Cargando...</div>
@@ -170,79 +185,92 @@ const $ = (id) => document.getElementById(id);
 
 function esc(t){ const d=document.createElement("div"); d.textContent=t||""; return d.innerHTML; }
 function normalizar(t){
-  return (t||"").trim().toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  return (t||"").trim().toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\s+/g," ");
 }
 
+/* Todo se liga por ID: la lista sale de la pestaña "Invitados" (cada quien
+   se registra al confirmar) y las mesas del croquis (asign[id]). Los que se
+   agregaron a mano en el croquis también aparecen, marcados "a mano". */
 let invitados = [];
-let croquisActual = null;
+let croquisActual = { mesas: [], asign: {}, grupos: [] };
 let busqueda = "";
+let filtro = "todos";
 
-/* Agrupa los `grupos` del croquis por nombre (normalizado): un mismo
-   invitado puede tener varias filas en la hoja de invitados (porque quedó
-   repartido en distintas mesas), así que se juntan en una sola fila con
-   todas sus mesas. */
-function agruparPorInvitado(croquis){
-  const mapa = new Map();
-  croquis.grupos.forEach(g => {
-    const clave = normalizar(g.nombre);
-    if (!mapa.has(clave)) mapa.set(clave, { nombre: g.nombre, total: 0, mesas: {} });
-    const entrada = mapa.get(clave);
-    entrada.total += g.total;
-    const asign = croquis.asign[g.id] || {};
-    Object.entries(asign).forEach(([mesaId, cant]) => {
-      entrada.mesas[mesaId] = (entrada.mesas[mesaId] || 0) + cant;
-    });
-  });
-  return Array.from(mapa.values()).sort((a,b) => a.nombre.localeCompare(b.nombre, "es"));
-}
-
-function linkInvitado(nombre){
+function linkInvitado(id){
   const url = new URL(CONFIG.paginaInvitado, location.href);
-  url.search = "?invitado=" + encodeURIComponent(nombre);
+  url.search = "?id=" + encodeURIComponent(id);
   return url.href;
+}
+function mesasDe(id){ return croquisActual.asign[id] || {}; }
+function sentados(id){ return Object.values(mesasDe(id)).reduce((a,b)=>a+b,0); }
+function numeroMesa(mid){ const m = croquisActual.mesas.find(x => x.id === mid); return m ? m.numero : "?"; }
+
+/* WhatsApp: solo dígitos; si son 10 (celular de México) se antepone 52 */
+function linkWhatsApp(inv){
+  let tel = (inv.telefono || "").replace(/\D/g, "");
+  if (!tel) return "";
+  if (tel.length === 10) tel = "52" + tel;
+  const mesas = Object.keys(mesasDe(inv.id)).map(numeroMesa);
+  const texto = `¡Hola ${inv.nombre}! Gracias por confirmar a los XV años de ${CONFIG.nombreQuinceanera}. ` +
+    (mesas.length ? `Tu lugar es en la mesa ${mesas.join(" y ")}. ` : "") +
+    `Aquí puedes ver tu lugar y los datos del evento: ${linkInvitado(inv.id)}`;
+  return `https://wa.me/${tel}?text=${encodeURIComponent(texto)}`;
 }
 
 function renderResumen(){
-  const totalInvitados = invitados.length;
-  const totalPersonas = invitados.reduce((s,i) => s + i.total, 0);
-  const totalAsignadas = invitados.reduce((s,i) => s + Object.values(i.mesas).reduce((a,b)=>a+b,0), 0);
-  const pendientes = totalPersonas - totalAsignadas;
+  const personas = invitados.reduce((s,i) => s + i.total, 0);
+  const adultos = invitados.reduce((s,i) => s + (i.adultos || 0), 0);
+  const ninos = invitados.reduce((s,i) => s + (i.ninos || 0), 0);
+  const conMesa = invitados.reduce((s,i) => s + Math.min(sentados(i.id), i.total), 0);
+  const sinMesa = personas - conMesa;
   $("resumen").innerHTML = `
-    <div class="dato"><div class="num">${totalInvitados}</div><div class="lbl">Invitados</div></div>
-    <div class="dato"><div class="num">${totalPersonas}</div><div class="lbl">Personas</div></div>
-    <div class="dato"><div class="num">${totalAsignadas}</div><div class="lbl">Con mesa</div></div>
-    <div class="dato ${pendientes>0?"alerta":""}"><div class="num">${pendientes}</div><div class="lbl">Sin mesa</div></div>
+    <div class="dato"><div class="num">${invitados.length}</div><div class="lbl">Invitados</div></div>
+    <div class="dato"><div class="num">${personas}</div><div class="lbl">Personas</div></div>
+    <div class="dato"><div class="num">${adultos}</div><div class="lbl">Adultos</div></div>
+    <div class="dato"><div class="num">${ninos}</div><div class="lbl">Niños -12</div></div>
+    <div class="dato"><div class="num">${conMesa}</div><div class="lbl">Con mesa</div></div>
+    <div class="dato ${sinMesa>0?"alerta":""}"><div class="num">${sinMesa}</div><div class="lbl">Sin mesa</div></div>
   `;
 }
 
 function renderLista(){
-  const filtrados = busqueda
-    ? invitados.filter(i => normalizar(i.nombre).includes(normalizar(busqueda)))
-    : invitados;
+  // nombres repetidos = posibles duplicados (alguien que confirmó desde dos celulares)
+  const cuenta = {};
+  invitados.forEach(i => { const k = normalizar(i.nombre); cuenta[k] = (cuenta[k] || 0) + 1; });
 
-  if (!filtrados.length){
-    $("lista").innerHTML = `<p class="vacio">Sin resultados.</p>`;
-    return;
-  }
+  let lista = invitados;
+  if (busqueda) lista = lista.filter(i => normalizar(i.nombre).includes(normalizar(busqueda)) || (i.telefono||"").includes(busqueda));
+  if (filtro === "sinmesa") lista = lista.filter(i => sentados(i.id) < i.total);
+  if (filtro === "duplicados") lista = lista.filter(i => cuenta[normalizar(i.nombre)] > 1);
 
-  $("lista").innerHTML = filtrados.map(inv => {
-    const mesaIds = Object.keys(inv.mesas);
-    const mesasHTML = mesaIds.length
-      ? `<div class="fila-mesas">${mesaIds.map(mid => {
-          const m = croquisActual.mesas.find(x => x.id === mid);
-          return `<span class="pastilla-mesa">Mesa <span class="n">${esc(m ? m.numero : "?")}</span> · ${inv.mesas[mid]}</span>`;
-        }).join("")}</div>`
+  if (!lista.length){ $("lista").innerHTML = `<p class="vacio">Sin resultados.</p>`; return; }
+
+  $("lista").innerHTML = lista.map(inv => {
+    const mapa = mesasDe(inv.id);
+    const ids = Object.keys(mapa);
+    const faltan = inv.total - sentados(inv.id);
+    const mesasHTML = ids.length
+      ? `<div class="fila-mesas">${ids.map(mid => `<span class="pastilla-mesa">Mesa <span class="n">${esc(numeroMesa(mid))}</span> · ${mapa[mid]}</span>`).join("")}</div>
+         ${faltan > 0 ? `<span class="pendiente">${faltan} sin mesa</span>` : ""}`
       : `<span class="pendiente">Sin mesa asignada</span>`;
+    const desglose = `${inv.adultos} adulto${inv.adultos===1?"":"s"}${inv.ninos ? ` · ${inv.ninos} niño${inv.ninos===1?"":"s"}` : ""}`;
+    const wa = linkWhatsApp(inv);
+    const dup = cuenta[normalizar(inv.nombre)] > 1;
     return `
-      <div class="fila-invitado">
+      <div class="fila-invitado ${dup ? "posible-dup" : ""}">
         <div>
-          <div class="nombre">${esc(inv.nombre)}</div>
-          <div class="cont">${inv.total} persona${inv.total===1?"":"s"}</div>
+          <div class="nombre">${esc(inv.nombre)}
+            ${inv.manual ? `<span class="etiqueta-fila">a mano</span>` : ""}
+            ${dup ? `<span class="etiqueta-fila alerta">¿duplicado?</span>` : ""}</div>
+          <div class="cont">${inv.total} persona${inv.total===1?"":"s"} · ${desglose}${inv.telefono ? ` · ☎ ${esc(inv.telefono)}` : ""}</div>
+          ${inv.mensaje ? `<div class="mensaje-fila">«${esc(inv.mensaje)}»</div>` : ""}
           <div style="margin-top:6px;">${mesasHTML}</div>
         </div>
         <div class="acciones-fila">
-          <a class="boton" href="${linkInvitado(inv.nombre)}" target="_blank" rel="noopener">Vista previa</a>
-          <button class="boton boton--solido" data-copiar="${esc(inv.nombre)}">Copiar link</button>
+          <a class="boton" href="${linkInvitado(inv.id)}" target="_blank" rel="noopener">Vista previa</a>
+          <button class="boton" data-copiar="${esc(inv.id)}">Copiar link</button>
+          ${wa ? `<a class="boton boton--solido" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
+          ${inv.manual ? "" : `<button class="boton boton--peligro" data-eliminar="${esc(inv.id)}" data-nombre="${esc(inv.nombre)}">Eliminar</button>`}
         </div>
       </div>`;
   }).join("");
@@ -257,6 +285,34 @@ function renderLista(){
       }).catch(() => { prompt("Copia este link manualmente:", url); });
     });
   });
+  $("lista").querySelectorAll("[data-eliminar]").forEach(btn => {
+    btn.addEventListener("click", () => eliminar(btn.dataset.eliminar, btn.dataset.nombre, btn));
+  });
+}
+
+/* Eliminar = Estado "Eliminado" en la hoja (no se borra la fila, se puede
+   recuperar cambiando el Estado a "Confirmado" en Google Sheets). */
+async function eliminar(id, nombre, btn){
+  if (!confirm(`¿Eliminar a "${nombre}" de la lista?\n\nÚsalo para duplicados o confirmaciones por error. Si tenía mesa, su lugar se libera la próxima vez que guardes el croquis.`)) return;
+  btn.disabled = true; btn.textContent = "Eliminando…";
+  try{
+    const r = await fetch(CONFIG.urlConfirmaciones, {
+      method: "POST", headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ accion: "eliminarInvitado", id })
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || "error");
+    cargar();
+  }catch(err){
+    alert("No se pudo eliminar: " + err.message);
+    btn.disabled = false; btn.textContent = "Eliminar";
+  }
+}
+
+function renderFiltros(){
+  const f = [["todos","Todos"],["sinmesa","Sin mesa"],["duplicados","Posibles duplicados"]];
+  $("filtros").innerHTML = f.map(([k,l]) => `<span class="chip ${filtro===k?"on":""}" data-f="${k}">${l}</span>`).join("");
+  $("filtros").querySelectorAll("[data-f]").forEach(c => c.addEventListener("click", () => { filtro = c.dataset.f; renderFiltros(); renderLista(); }));
 }
 
 async function cargar(){
@@ -265,6 +321,10 @@ async function cargar(){
   $("lista").innerHTML = "";
   $("resumen").innerHTML = "";
 
+  if (!CONFIG.urlConfirmaciones || CONFIG.urlConfirmaciones.startsWith("PEGA_AQUI")){
+    $("estado").textContent = "Falta configurar CONFIG.urlConfirmaciones en este archivo (la misma URL /exec que en invitacion.html).";
+    return;
+  }
   if (location.protocol === "file:"){
     $("estado").innerHTML =
       "Este archivo se abrió directamente desde tu computadora (doble clic), y los " +
@@ -273,20 +333,23 @@ async function cargar(){
     return;
   }
   try{
-    const r = await fetch(CONFIG.urlConfirmaciones + "?accion=croquis");
-    const d = await r.json();
-    if (!d.ok || !d.croquis || !d.croquis.grupos || !d.croquis.grupos.length){
-      $("estado").textContent = "Todavía no hay invitados cargados en el croquis de mesas.";
-      return;
-    }
-    croquisActual = d.croquis;
-    invitados = agruparPorInvitado(d.croquis);
+    const [ri, rc] = await Promise.all([
+      fetch(CONFIG.urlConfirmaciones + "?accion=invitados"),
+      fetch(CONFIG.urlConfirmaciones + "?accion=croquis")
+    ]);
+    const di = await ri.json(), dc = await rc.json();
+    if (!di.ok){ $("estado").textContent = "No se pudo leer la lista de invitados."; return; }
+    croquisActual = Object.assign({ mesas: [], asign: {}, grupos: [] }, (dc.ok && dc.croquis) || {});
+    const manuales = (croquisActual.grupos || []).filter(g => g.origen === "manual")
+      .map(g => ({ id: g.id, nombre: g.nombre, total: g.total, adultos: g.total, ninos: 0, telefono: "", mensaje: "", manual: true }));
+    invitados = di.invitados.concat(manuales).sort((a,b) => a.nombre.localeCompare(b.nombre, "es"));
+    if (!invitados.length){ $("estado").textContent = "Todavía nadie ha confirmado."; return; }
     $("estado").classList.add("oculto");
     renderResumen();
+    renderFiltros();
     renderLista();
   }catch(err){
-    $("estado").innerHTML =
-      "No se pudo conectar.<br><br><strong>Detalle técnico:</strong> " + esc(err.message);
+    $("estado").innerHTML = "No se pudo conectar.<br><br><strong>Detalle técnico:</strong> " + esc(err.message);
   }
 }
 

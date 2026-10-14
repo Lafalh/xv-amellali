@@ -475,19 +475,27 @@ async function cargarInvitado(criterio){
     return;
   }
   try{
-    const r = await fetch(CONFIG.urlConfirmaciones + "?accion=croquis");
-    const d = await r.json();
-    if (!d.ok || !d.croquis || !d.croquis.grupos){
+    // La lista sale de la pestaña "Invitados" (cada quien se registra al
+    // confirmar) y las mesas del croquis, todo ligado por el ID del invitado.
+    const [ri, rc] = await Promise.all([
+      fetch(CONFIG.urlConfirmaciones + "?accion=invitados"),
+      fetch(CONFIG.urlConfirmaciones + "?accion=croquis")
+    ]);
+    const di = await ri.json(), dc = await rc.json();
+    if (!di.ok){
       mostrarEstado("No pudimos cargar la información en este momento. Intenta de nuevo en un rato.");
       return;
     }
-    const grupos = buscarGrupos(d.croquis, criterio);
+    const croquis = Object.assign({ mesas: [], asign: {}, grupos: [] }, (dc.ok && dc.croquis) || {});
+    const todos = di.invitados.map(i => ({ id: i.id, nombre: i.nombre, total: i.total }))
+      .concat((croquis.grupos || []).filter(g => g.origen === "manual"));
+    const grupos = buscarGrupos({ grupos: todos }, criterio);
     if (!grupos.length){
       mostrarEstado(`No encontramos una confirmación a nombre de <strong>"${esc(criterio.nombre || criterio.id)}"</strong>.
         Pide que te compartan de nuevo tu link, o escríbenos directamente si crees que es un error.`);
       return;
     }
-    pintarConfirmacion(criterio.nombre || grupos[0].nombre, grupos, d.croquis);
+    pintarConfirmacion(criterio.id ? grupos[0].nombre : (criterio.nombre || grupos[0].nombre), grupos, croquis);
   }catch(e){
     mostrarEstado("No se pudo conectar. Revisa tu conexión a internet e intenta de nuevo.");
   }

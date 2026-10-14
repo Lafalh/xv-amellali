@@ -1,26 +1,32 @@
 /**
- * BACKEND GRATUITO — CONFIRMACIONES + CROQUIS DE MESAS
+ * BACKEND GRATUITO — LISTA DE INVITADOS + CROQUIS DE MESAS (XV de Amellali)
  * =========================================================
- * Este script maneja dos cosas:
- *   1. Las confirmaciones de asistencia (index.html y panel-dedicatorias.html)
- *   2. El acomodo de mesas (croquis-mesas.html)
- *
- * Todo vive en la MISMA hoja de cálculo, en pestañas separadas, así que
- * una cosa no interfiere con la otra.
+ * UNA SOLA LISTA DE INVITADOS. Cada invitado se registra al confirmar en
+ * la invitación y recibe un ID (lo genera la invitación y lo guarda en su
+ * celular). Todos los paneles usan ese ID, nunca el nombre, así que:
+ *   - si la misma persona vuelve a confirmar desde su celular, se ACTUALIZA
+ *     su fila en vez de crear otra;
+ *   - el croquis guarda las mesas por ID: corregir un nombre en la hoja no
+ *     rompe nada;
+ *   - el link de "mi mesa" de cada invitado es mi-confirmacion.html?id=ID.
  *
  * =========================================================
  * PASO 1 — LA HOJA DE CÁLCULO
  * =========================================================
- * Solo necesitas la pestaña que YA tienes con las confirmaciones.
- * Asegúrate de que se llame "Confirmaciones" (clic derecho sobre la
- * pestaña > Cambiar nombre), con estos encabezados en la fila 1:
+ * Crea una hoja de cálculo nueva. NO necesitas crear pestañas: la primera
+ * vez que alguien confirme se crea sola la pestaña "Invitados" con estos
+ * encabezados:
  *
- *     Fecha | Nombre | Asiste | Pases | Adultos | Niños | Mensaje
+ *   ID | Fecha | Nombre | Teléfono | Adultos | Niños | Total | Mensaje | Estado | Actualizado
  *
- * (Pases = total de personas; Adultos y Niños menores de 12 es el desglose.)
+ * - Puedes corregir a mano Nombre, Teléfono, Adultos, Niños o Mensaje.
+ *   (Total se recalcula solo la próxima vez que esa persona confirme; si lo
+ *   corriges a mano, corrige también Total.)
+ * - Estado: "Confirmado" o "Eliminado" (los paneles ocultan los eliminados;
+ *   así se quitan duplicados sin perder el registro).
+ * - NO cambies la columna ID.
  *
- * La pestaña "Croquis" NO la crees tú: el script la genera sola la
- * primera vez que guardes el acomodo de mesas.
+ * La pestaña "Croquis" también se crea sola al primer guardado del croquis.
  *
  * =========================================================
  * PASO 2 — INSTALAR
@@ -30,11 +36,10 @@
  * 3. Implementar > Nueva implementación > Aplicación web:
  *      - Ejecutar como: "Yo"
  *      - Quién tiene acceso: "Cualquier usuario"   <-- IMPRESCINDIBLE
- * 4. Copia la URL que te da y pégala en CONFIG.urlConfirmaciones de:
- *      - index.html
- *      - panel-dedicatorias.html
- *      - croquis-mesas.html
- *    (es la misma URL en los tres archivos)
+ * 4. Copia la URL que te da (termina en /exec) y pégala en
+ *    CONFIG.urlConfirmaciones de TODOS los HTML: invitacion.html,
+ *    invitacion-marco.html, invitacion-victoriana.html, index.html,
+ *    croquis-mesas.html, confirmacion.html y mi-confirmacion.html.
  *
  * ⚠️ Cada vez que edites este script, ve a Implementar > Gestionar
  * implementaciones > lápiz > Versión: "Nueva versión" > Implementar.
@@ -43,14 +48,27 @@
  * =========================================================
  * PROBAR QUE FUNCIONA
  * =========================================================
- * Pega tu URL terminada en /exec en el navegador y agrégale "?prueba=1".
- * Si ves "✅ Fila de prueba agregada" y aparece una fila nueva con el
- * nombre "PRUEBA", todo está bien. Si te pide iniciar sesión o da error,
- * revisa los permisos del paso 3.
+ * Abre tu URL /exec en el navegador con "?prueba=1" al final. Debe decir
+ * "✅ Fila de prueba agregada" y aparecer un invitado "PRUEBA" en la hoja
+ * (bórralo o ponle Estado = Eliminado).
+ *
+ * =========================================================
+ * LLAMADAS
+ * =========================================================
+ *   POST {accion:"confirmar", id, nombre, telefono, adultos, ninos, mensaje}
+ *        → crea o actualiza la fila de ese ID
+ *   POST {accion:"eliminarInvitado", id}   → Estado = Eliminado
+ *   POST {accion:"guardarCroquis", croquis} → guarda mesas + acomodo
+ *   GET  ?accion=invitados → lista de invitados (sin eliminados)
+ *   GET  ?accion=invitado&id=ID → un invitado
+ *   GET  ?accion=croquis   → acomodo de mesas
+ *   GET  ?prueba=1         → agrega un invitado de prueba
  */
 
-const HOJA_CONFIRMACIONES = "Confirmaciones";
+const HOJA_INVITADOS = "Invitados";
 const HOJA_CROQUIS = "Croquis";
+const ENCABEZADOS = ["ID", "Fecha", "Nombre", "Teléfono", "Adultos", "Niños", "Total", "Mensaje", "Estado", "Actualizado"];
+const COL = { id: 0, fecha: 1, nombre: 2, telefono: 3, adultos: 4, ninos: 5, total: 6, mensaje: 7, estado: 8, actualizado: 9 };
 
 /* ============================================================
    ESCRITURA (POST)
@@ -58,76 +76,120 @@ const HOJA_CROQUIS = "Croquis";
 function doPost(e) {
   const datos = JSON.parse(e.postData.contents);
 
-  // Guardar el acomodo de mesas
-  if (datos.accion === "guardarCroquis") {
-    return responderJSON(guardarCroquis(datos.croquis));
-  }
+  if (datos.accion === "guardarCroquis") return responderJSON(guardarCroquis(datos.croquis));
+  if (datos.accion === "eliminarInvitado") return responderJSON(cambiarEstado(datos.id, "Eliminado"));
 
-  // Por defecto: confirmación de asistencia
-  guardarConfirmacion(datos);
-  return responderJSON({ ok: true });
+  // Por defecto (y accion:"confirmar"): confirmación de asistencia
+  return responderJSON(confirmar(datos));
 }
 
 /* ============================================================
    LECTURA (GET)
    ============================================================ */
 function doGet(e) {
-  // Prueba rápida de escritura
-  if (e.parameter.prueba) {
-    guardarConfirmacion({
-      nombre: "PRUEBA", asiste: "si", pases: 1,
-      mensaje: "Fila de prueba generada desde el navegador"
-    });
-    return ContentService
-      .createTextOutput("✅ Fila de prueba agregada. Revisa tu hoja de cálculo.")
+  const p = e.parameter;
+
+  if (p.prueba) {
+    confirmar({ id: "PRUEBA-" + Date.now().toString(36), nombre: "PRUEBA", adultos: 1, ninos: 0,
+                mensaje: "Fila de prueba generada desde el navegador" });
+    return ContentService.createTextOutput("✅ Fila de prueba agregada. Revisa tu hoja de cálculo.")
       .setMimeType(ContentService.MimeType.TEXT);
   }
-
-  // Confirmaciones (panel-dedicatorias.html y el importador del croquis)
-  if (e.parameter.accion === "listar") {
-    return responderJSON({ ok: true, confirmaciones: leerConfirmaciones() });
+  if (p.accion === "invitados") return responderJSON({ ok: true, invitados: leerInvitados() });
+  if (p.accion === "invitado") {
+    const inv = leerInvitados().find(i => i.id === p.id);
+    return responderJSON(inv ? { ok: true, invitado: inv } : { ok: false, error: "No existe ese invitado" });
   }
-
-  // Acomodo de mesas (croquis-mesas.html)
-  if (e.parameter.accion === "croquis") {
-    return responderJSON({ ok: true, croquis: leerCroquis() });
-  }
+  if (p.accion === "croquis") return responderJSON({ ok: true, croquis: leerCroquis() });
 
   return ContentService
-    .createTextOutput("Endpoint activo. Usa ?prueba=1, ?accion=listar o ?accion=croquis.")
+    .createTextOutput("Endpoint activo. Usa ?prueba=1, ?accion=invitados o ?accion=croquis.")
     .setMimeType(ContentService.MimeType.TEXT);
 }
 
 /* ============================================================
-   CONFIRMACIONES
+   INVITADOS
    ============================================================ */
-function guardarConfirmacion(datos) {
-  const hoja = hojaPorNombre(HOJA_CONFIRMACIONES);
-  hoja.appendRow([
-    new Date(),
-    datos.nombre || "",
-    datos.asiste === "si" ? "Sí" : "No",
-    datos.pases || 0,
-    datos.adultos || 0,
-    datos.ninos || 0,
-    datos.mensaje || ""
-  ]);
+function hojaInvitados() {
+  const libro = SpreadsheetApp.getActiveSpreadsheet();
+  let hoja = libro.getSheetByName(HOJA_INVITADOS);
+  if (!hoja) {
+    hoja = libro.insertSheet(HOJA_INVITADOS, 0);
+    hoja.getRange(1, 1, 1, ENCABEZADOS.length).setValues([ENCABEZADOS]).setFontWeight("bold");
+    hoja.setFrozenRows(1);
+  }
+  return hoja;
 }
 
-function leerConfirmaciones() {
-  const hoja = hojaPorNombre(HOJA_CONFIRMACIONES);
-  const filas = hoja.getDataRange().getValues();
-  const datos = filas.slice(1).map(f => ({
-    fecha: f[0] instanceof Date ? f[0].toISOString() : String(f[0] || ""),
-    nombre: String(f[1] || ""),
-    asiste: String(f[2] || ""),
-    pases: Number(f[3]) || 0,
-    adultos: Number(f[4]) || 0,
-    ninos: Number(f[5]) || 0,
-    mensaje: String(f[6] || "")
-  }));
-  datos.reverse();
-  return datos;
+function filaAInvitado(f) {
+  const adultos = Number(f[COL.adultos]) || 0;
+  const ninos = Number(f[COL.ninos]) || 0;
+  return {
+    id: String(f[COL.id] || ""),
+    fecha: f[COL.fecha] instanceof Date ? f[COL.fecha].toISOString() : String(f[COL.fecha] || ""),
+    nombre: String(f[COL.nombre] || ""),
+    telefono: String(f[COL.telefono] || ""),
+    adultos: adultos,
+    ninos: ninos,
+    total: Number(f[COL.total]) || (adultos + ninos),
+    mensaje: String(f[COL.mensaje] || ""),
+    estado: String(f[COL.estado] || "Confirmado"),
+    actualizado: f[COL.actualizado] instanceof Date ? f[COL.actualizado].toISOString() : String(f[COL.actualizado] || "")
+  };
+}
+
+/** Lista de invitados (sin los eliminados), del más reciente al más viejo. */
+function leerInvitados() {
+  const hoja = hojaInvitados();
+  const filas = hoja.getDataRange().getValues().slice(1);
+  return filas
+    .filter(f => f[COL.id])
+    .map(filaAInvitado)
+    .filter(i => i.estado !== "Eliminado")
+    .reverse();
+}
+
+/** Crea o actualiza (por ID) la fila del invitado. */
+function confirmar(datos) {
+  const id = String(datos.id || "").trim();
+  const nombre = String(datos.nombre || "").trim();
+  if (!id || !nombre) return { ok: false, error: "Falta id o nombre" };
+
+  const adultos = Math.max(0, parseInt(datos.adultos, 10) || 0);
+  const ninos = Math.max(0, parseInt(datos.ninos, 10) || 0);
+  // Confirmaciones viejas que solo traen "pases": todo cuenta como adultos
+  const adultosFinal = (adultos || ninos) ? adultos : Math.max(1, parseInt(datos.pases, 10) || 1);
+
+  const candado = LockService.getScriptLock();
+  try { candado.waitLock(10000); } catch (err) { return { ok: false, error: "Sistema ocupado, intenta de nuevo." }; }
+  try {
+    const hoja = hojaInvitados();
+    const ids = hoja.getRange(1, 1, Math.max(hoja.getLastRow(), 1), 1).getValues().map(f => String(f[0]));
+    const fila = ids.indexOf(id) + 1; // 0 si no existe
+    const ahora = new Date();
+    if (fila > 1) {
+      // Ya existía: se actualiza su misma fila (no se pierde la fecha original)
+      hoja.getRange(fila, COL.nombre + 1, 1, 8).setValues([[
+        nombre, String(datos.telefono || ""), adultosFinal, ninos, adultosFinal + ninos,
+        String(datos.mensaje || ""), "Confirmado", ahora
+      ]]);
+      return { ok: true, id: id, actualizado: true };
+    }
+    hoja.appendRow([id, ahora, nombre, String(datos.telefono || ""), adultosFinal, ninos,
+                    adultosFinal + ninos, String(datos.mensaje || ""), "Confirmado", ahora]);
+    return { ok: true, id: id, nuevo: true };
+  } finally {
+    candado.releaseLock();
+  }
+}
+
+function cambiarEstado(id, estado) {
+  const hoja = hojaInvitados();
+  const ids = hoja.getRange(1, 1, Math.max(hoja.getLastRow(), 1), 1).getValues().map(f => String(f[0]));
+  const fila = ids.indexOf(String(id)) + 1;
+  if (fila < 2) return { ok: false, error: "No existe ese invitado" };
+  hoja.getRange(fila, COL.estado + 1, 1, 2).setValues([[estado, new Date()]]);
+  return { ok: true };
 }
 
 /* ============================================================
@@ -135,8 +197,10 @@ function leerConfirmaciones() {
    ============================================================
    Se guarda como texto JSON dentro de la pestaña "Croquis", repartido
    en trozos por la columna A (las celdas de Sheets admiten un máximo
-   de caracteres). Vive en su propia pestaña, así que no interfiere
-   con las confirmaciones. La pestaña se crea sola al primer guardado.
+   de caracteres). Guarda las mesas, el acomodo (asign: {idInvitado:
+   {idMesa: cantidad}}) y los invitados agregados a mano en el croquis.
+   La lista de invitados que confirmaron NO se guarda aquí: el croquis
+   la lee siempre de la pestaña "Invitados".
    ============================================================ */
 const TROZO = 45000;
 
@@ -186,15 +250,6 @@ function guardarCroquis(croquis) {
 /* ============================================================
    UTILIDADES
    ============================================================ */
-function hojaPorNombre(nombre) {
-  const libro = SpreadsheetApp.getActiveSpreadsheet();
-  const hoja = libro.getSheetByName(nombre);
-  if (hoja) return hoja;
-  // Si todavía no le cambiaste el nombre a la pestaña, usa la primera
-  // para no romper las confirmaciones.
-  return libro.getSheets()[0];
-}
-
 function responderJSON(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))

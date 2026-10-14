@@ -225,6 +225,9 @@ header h1{ font-size:1.4rem; }
 .dato .num{ font-family:var(--capitular); font-weight:700; color:var(--titulo); }
 .barra input[type=text]{ border-radius:999px; }
 .rotulo-plano{ font-family:var(--capitular); color:var(--titulo); }
+
+.tag-manual{ font-size:.55rem; letter-spacing:.06em; text-transform:uppercase; padding:1px 7px; border-radius:999px;
+             background:var(--pergamino-2); color:var(--rosa-viejo); font-weight:500; vertical-align:middle; }
 </style>
 </head>
 <body>
@@ -241,7 +244,7 @@ const CONFIG = {
 <nav class="nav-sitio">
   <a href="index.html">Dedicatorias</a>
   <a href="invitacion.html">Invitación</a>
-  <a href="confirmacion.html">Confirmaciones</a>
+  <a href="confirmacion.html">Invitados</a>
 </nav>
 
 <header>
@@ -251,7 +254,9 @@ const CONFIG = {
   </div>
   <div class="acciones">
     <button class="boton" id="btn-organizar" title="Mover mesas de lugar en el plano">▦ Organizar mesas</button>
-    <button class="boton" id="btn-importar-excel" title="Reemplazar la lista de invitados y su acomodo con el Excel de invitados">⇪ Importar Excel</button>
+    <button class="boton" id="btn-agregar-invitado" title="Agregar a alguien que tiene lugar pero no va a confirmar en la invitación">+ Agregar invitado</button>
+    <!-- La lista ahora sale de las confirmaciones; el importador de Excel de la boda queda oculto -->
+    <button class="boton" id="btn-importar-excel" style="display:none">⇪ Importar Excel</button>
     <input type="file" id="input-excel" accept=".xlsx" style="display:none">
     <button class="boton" id="btn-reiniciar" title="Quitar a todos los invitados de sus mesas">Reiniciar acomodo</button>
     <button class="boton" id="btn-deshacer" disabled title="Deshacer el último cambio (Ctrl+Z)">↶ Deshacer</button>
@@ -370,9 +375,13 @@ async function cargar(){
     render(); return;
   }
   try{
-    const r = await fetch(CONFIG.urlConfirmaciones + "?accion=croquis");
+    const [r, ri] = await Promise.all([
+      fetch(CONFIG.urlConfirmaciones + "?accion=croquis"),
+      fetch(CONFIG.urlConfirmaciones + "?accion=invitados")
+    ]);
     const d = await r.json();
-    if(d.ok && d.croquis && d.croquis.grupos && d.croquis.grupos.length){
+    const di = await ri.json();
+    if(d.ok && d.croquis && d.croquis.mesas && d.croquis.mesas.length){
       estado = d.croquis;
       // Las mesas guardadas en la hoja se respetan (así sí se guarda el
       // reacomodo que se hace en "Organizar mesas"), PERO si vienen en el
@@ -385,12 +394,58 @@ async function cargar(){
       estado = JSON.parse(JSON.stringify(SEED));
       avisar("Primera vez: se cargó el acomodo inicial");
     }
+    if(!estado.asign) estado.asign = {};
+    if(di.ok) sincronizarConInvitados(di.invitados);
   }catch(e){
     estado = JSON.parse(JSON.stringify(SEED));
     avisar("No se pudo conectar: usando datos locales");
   }
   if(!estado.asign) estado.asign = {};
   render();
+}
+
+/* La lista de invitados NO se edita aquí: sale de la pestaña "Invitados"
+   (cada quien se registra al confirmar en la invitación). Al cargar se
+   reconstruye estado.grupos con esa lista, ligada por ID, y se conservan
+   los que se agregaron a mano en el croquis (origen "manual"). Los
+   lugares de invitados que ya no existen (eliminados) se liberan. */
+function sincronizarConInvitados(invitados){
+  const manuales = (estado.grupos || []).filter(g => g.origen === "manual");
+  const deInvitacion = invitados.map(i => ({
+    id: i.id, nombre: i.nombre, total: i.total, adultos: i.adultos, ninos: i.ninos, origen: "invitacion"
+  }));
+  estado.grupos = deInvitacion.concat(manuales);
+  const vigentes = new Set(estado.grupos.map(g => g.id));
+  let liberados = 0;
+  for (const gid in estado.asign){
+    if (!vigentes.has(gid)){ liberados += Object.values(estado.asign[gid]).reduce((a,b)=>a+b,0); delete estado.asign[gid]; sucio = true; }
+  }
+  // si alguien bajó su número de personas, se quitan los lugares que sobran
+  estado.grupos.forEach(g => {
+    let sobran = sentadosDe(g.id) - g.total;
+    const mapa = estado.asign[g.id] || {};
+    for (const mid of Object.keys(mapa)){
+      if (sobran <= 0) break;
+      const q = Math.min(sobran, mapa[mid]);
+      mapa[mid] -= q; sobran -= q; liberados += q; sucio = true;
+      if (mapa[mid] <= 0) delete mapa[mid];
+    }
+  });
+  if (liberados) avisar(`Se liberaron ${liberados} lugar(es) de invitados eliminados o que cambiaron su respuesta. Guarda para conservarlo.`);
+}
+
+/* Para quien tiene lugar pero no va a confirmar en la invitación
+   (ej. la familia de la quinceañera). Solo existe en el croquis. */
+function agregarInvitadoManual(){
+  const nombre = (prompt("Nombre del invitado o familia:") || "").trim();
+  if (!nombre) return;
+  const total = parseInt(prompt(`¿Cuántas personas son "${nombre}"?`, "1"), 10);
+  if (!(total > 0)) return;
+  guardarHistorial();
+  estado.grupos.push({ id: "m_" + Date.now().toString(36), nombre, total, origen: "manual" });
+  sucio = true;
+  render();
+  avisar(`Se agregó "${nombre}" (${total}). Recuerda guardar.`);
 }
 
 async function guardar(){
@@ -1097,8 +1152,8 @@ function renderLista(){
     }).join("");
     return `<div class="grupo ${pend===0?"completo":""}">
       <div class="fila1">
-        <span class="nom">${esc(g.nombre)}</span>
-        <span class="cont">${sentadosDe(g.id)}/${g.total}</span>
+        <span class="nom">${esc(g.nombre)}${g.origen==="manual" ? ' <span class="tag-manual">a mano</span>' : ""}</span>
+        <span class="cont" title="${g.adultos!=null ? `${g.adultos} adultos, ${g.ninos||0} niños` : ""}">${sentadosDe(g.id)}/${g.total}</span>
       </div>
       <div class="fila2">
         <button class="mini" data-sentar="${g.id}" ${pend<=0||!mesaSel?"disabled":""} title="Sentar uno en la mesa elegida">+</button>
@@ -1174,6 +1229,7 @@ $("btn-deshacer").addEventListener("click", deshacer);
 $("btn-rehacer").addEventListener("click", rehacer);
 $("btn-reiniciar").addEventListener("click", reiniciarAcomodo);
 $("btn-agregar-mesa").addEventListener("click", agregarMesa);
+$("btn-agregar-invitado").addEventListener("click", agregarInvitadoManual);
 $("btn-quitar-mesa").addEventListener("click", ()=>{ if(mesaSelOrg) quitarMesa(mesaSelOrg); });
 $("btn-rotar-novios").addEventListener("click", rotarNovios);
 $("btn-importar-excel").addEventListener("click", ()=> $("input-excel").click());

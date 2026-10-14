@@ -220,7 +220,7 @@ h2, h3{ color:var(--titulo); }
 <nav class="nav-sitio">
   <a href="invitacion.html">Invitación</a>
   <a href="croquis-mesas.html">Croquis de mesas</a>
-  <a href="confirmacion.html">Confirmaciones</a>
+  <a href="confirmacion.html">Invitados</a>
 </nav>
 
 <!-- ================================================================
@@ -300,7 +300,7 @@ async function cargarDatos(){
   }
 
   try {
-    const url = `${CONFIG.urlConfirmaciones}?accion=listar`;
+    const url = `${CONFIG.urlConfirmaciones}?accion=invitados`;
     const resp = await fetch(url);
     if (!resp.ok) {
       $("estado").textContent = `El servidor respondió con un error (código ${resp.status}). Revisa que la URL de CONFIG.urlConfirmaciones sea exactamente la misma que en invitacion.html.`;
@@ -314,7 +314,8 @@ async function cargarDatos(){
     }
 
     $("estado").textContent = "";
-    pintarDatos(datos.confirmaciones);
+    // Cada invitado de la pestaña "Invitados" es una confirmación (se registran al confirmar)
+    pintarDatos((datos.invitados || []).map(i => Object.assign({}, i, { pases: i.total, asiste: "Sí" })));
   } catch (err) {
     $("estado").innerHTML =
       "No se pudo conectar.<br><br>" +
@@ -481,11 +482,11 @@ function pintarDatos(confirmaciones){
     $("tabla-confirmaciones").innerHTML = `<tr><td class="vacio">Aún no hay confirmaciones.</td></tr>`;
   } else {
     $("tabla-confirmaciones").innerHTML = `
-      <tr><th>Nombre</th><th>Asiste</th><th>Adultos</th><th>Niños</th><th>Total</th><th>Fecha</th></tr>
+      <tr><th>Nombre</th><th>WhatsApp</th><th>Adultos</th><th>Niños</th><th>Total</th><th>Fecha</th></tr>
       ${confirmaciones.map(c => `
         <tr>
           <td>${escaparHTML(c.nombre)}</td>
-          <td>${escaparHTML(c.asiste)}</td>
+          <td>${escaparHTML(c.telefono) || "—"}</td>
           <td>${c.adultos || "—"}</td>
           <td>${c.ninos || 0}</td>
           <td><strong>${c.pases}</strong></td>
