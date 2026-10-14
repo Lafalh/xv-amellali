@@ -23,6 +23,13 @@ misma estructura, mismo bloque `CONFIG`, mismo backend de Apps Script.
   (según la imagen de referencia). Colores: **rosa baby + dorado + blanco**
   (al principio era rojo vino como la referencia; se cambió a petición).
 
+## Publicación (GitHub Pages)
+
+- Repo público: https://github.com/Lafalh/xv-amellali (rama `main`, raíz `/`, con `.nojekyll`).
+- **Link para invitados:** https://lafalh.github.io/xv-amellali/invitacion.html
+- Panel de organizadores: https://lafalh.github.io/xv-amellali/ (`index.html`, sin clave — no compartir).
+- Cada `git push` a `main` republica el sitio solo (tarda ~1 min).
+
 ## Archivos
 
 | Archivo | Qué es |
