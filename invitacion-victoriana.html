@@ -516,6 +516,11 @@ a{color:inherit;}
   background:#FDF0F3; border:1px solid #E48AA3; color:#5B3A41; font-size:1rem; line-height:1.4; text-align:center;
 }
 .ya-confirmado.oculto{ display:none; }
+
+/* -------- QR de subir fotos: también se puede tocar -------- */
+a.qr-caja{ display:inline-block; text-decoration:none; transition:transform .2s ease, box-shadow .2s ease; cursor:pointer; }
+a.qr-caja:hover{ transform:translateY(-2px); }
+.qr-pista{ display:block; font-family:"Jost", sans-serif; font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; margin-top:8px; opacity:.8; }
 </style>
 </head>
 <body class="cerrada">
@@ -630,11 +635,13 @@ a{color:inherit;}
   <!-- SUBIR FOTOS (CONFIG.mostrarSubirFotos) -->
   <section class="seccion envoltura centro" id="seccion-fotos">
     <div class="reveal">
+      <div class="grabado" data-grabado="camara"></div>
+      <p class="ojo-de-cerradura">Comparte el recuerdo</p>
       <h2 class="titulo-seccion">Sube tus fotos</h2>
       <p style="margin-top:14px; line-height:1.6;">
-        Escanea el código con tu celular para subir las fotos y videos que tomes durante la fiesta.
+        Escanea el código con tu celular, o simplemente tócalo, para subir las fotos y videos que tomes durante la fiesta.
       </p>
-      <div class="qr-caja"><img id="qr-fotos" alt="Código QR para subir fotos"></div>
+      <a class="qr-caja" id="lnk-qr-fotos" target="_blank" rel="noopener" aria-label="Abrir la página para subir fotos"><img id="qr-fotos" alt="Código QR para subir fotos"><span class="qr-pista">Toca o escanea</span></a>
       <div class="fila-botones">
         <a class="boton boton--solido" id="lnk-fotos" target="_blank" rel="noopener">Subir mis fotos</a>
       </div>
@@ -774,12 +781,13 @@ const CONFIG = {
 
   fechaLimiteConfirmar: "— Antes del 24 de octubre —",
 
-  // Secciones que todavía no tienen contenido (no hay fotos ni carpeta de Drive)
+  // Galería: todavía no hay fotos que mostrar (las de los invitados se ven en el panel fotos.html)
   mostrarGaleria: false,
-  mostrarSubirFotos: false,
+  mostrarSubirFotos: true,
   galeria: [],
   hashtag: "",
-  enlaceCarpetaFotos: "",
+  // Página para subir fotos: guarda el original en Drive y una copia en el repo (rama "fotos")
+  enlaceCarpetaFotos: "subir-fotos.html",
 
   // Máximo de pases que un invitado puede confirmar (se puede bajar por link: ?pases=3)
   pasesMaximos: 10,
@@ -931,6 +939,12 @@ const SVG_FILIGRANA = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/
 
 /* ---------- Ilustraciones tipo grabado (línea fina, viewBox 64×56) ---------- */
 const GRABADOS = {
+  camara: `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="8" y="20" width="22" height="30" rx="2"/><path d="M12,20 V15 H24 V20"/>
+    <path d="M30,24 L44,18 V52 L30,46"/><path d="M34,22.5 V47.5 M38,20.8 V49.2 M42,19 V51" opacity=".7"/>
+    <rect x="44" y="26" width="6" height="18" rx="1"/><circle cx="53" cy="35" r="5"/><circle cx="53" cy="35" r="2.2"/>
+    <circle cx="19" cy="35" r="5" opacity=".7"/><path d="M8,58 L19,50 L30,58 M19,50 V62"/>
+  </svg>`,
   libro: `<svg viewBox="0 0 80 60" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
     <path d="M8,40 C20,34 32,34 40,40 C48,34 60,34 72,40 L72,50 C60,44 48,44 40,50 C32,44 20,44 8,50 Z"/>
     <path d="M12,43 C22,38 32,38 38,43"/><path d="M42,43 C48,38 58,38 68,43"/>
@@ -1121,8 +1135,10 @@ function pintarContenido(){
 
   // Subir fotos
   if (CONFIG.mostrarSubirFotos && CONFIG.enlaceCarpetaFotos) {
-    $("lnk-fotos").href = CONFIG.enlaceCarpetaFotos;
-    $("qr-fotos").src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=5B3A41&bgcolor=FFFFFF&data=${encodeURIComponent(CONFIG.enlaceCarpetaFotos)}`;
+    const urlFotos = new URL(CONFIG.enlaceCarpetaFotos, location.href).href;
+    $("lnk-fotos").href = urlFotos;
+    $("lnk-qr-fotos").href = urlFotos;
+    $("qr-fotos").src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=5B3A41&bgcolor=FFFFFF&data=${encodeURIComponent(urlFotos)}`;
     $("txt-hashtag").textContent = CONFIG.hashtag;
   } else {
     $("seccion-fotos").style.display = "none";

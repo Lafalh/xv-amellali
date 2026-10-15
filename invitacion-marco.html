@@ -420,6 +420,11 @@ h1,h2,h3{ font-family:var(--display); font-weight:500; font-style:italic; line-h
   background:#FDF0F3; border:1px solid #E48AA3; color:#5B3A41; font-size:1rem; line-height:1.4; text-align:center;
 }
 .ya-confirmado.oculto{ display:none; }
+
+/* -------- QR de subir fotos: también se puede tocar -------- */
+a.qr-caja{ display:inline-block; text-decoration:none; transition:transform .2s ease, box-shadow .2s ease; cursor:pointer; }
+a.qr-caja:hover{ transform:translateY(-2px); }
+.qr-pista{ display:block; font-family:"Jost", sans-serif; font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; margin-top:8px; opacity:.8; }
 </style>
 </head>
 <body class="cerrada">
@@ -530,10 +535,10 @@ h1,h2,h3{ font-family:var(--display); font-weight:500; font-style:italic; line-h
       <p class="ojo-de-cerradura">Comparte el recuerdo</p>
       <h2 class="titulo-seccion">Sube tus fotos</h2>
       <p style="margin-top:14px; opacity:.85; line-height:1.6;">
-        Escanea el código con tu celular para subir las fotos y videos que tomes durante la fiesta.
+        Escanea el código con tu celular, o simplemente tócalo, para subir las fotos y videos que tomes durante la fiesta.
         ¡Ayúdame a guardar cada momento!
       </p>
-      <div class="qr-caja"><img id="qr-fotos" alt="Código QR para subir fotos"></div>
+      <a class="qr-caja" id="lnk-qr-fotos" target="_blank" rel="noopener" aria-label="Abrir la página para subir fotos"><img id="qr-fotos" alt="Código QR para subir fotos"><span class="qr-pista">Toca o escanea</span></a>
       <div class="fila-botones">
         <a class="boton boton--solido" id="lnk-fotos" target="_blank" rel="noopener">Subir mis fotos</a>
       </div>
@@ -669,12 +674,13 @@ const CONFIG = {
 
   fechaLimiteConfirmar: "Confirma antes del 24 de octubre",
 
-  // Secciones que todavía no tienen contenido (no hay fotos ni carpeta de Drive)
+  // Galería: todavía no hay fotos que mostrar (las de los invitados se ven en el panel fotos.html)
   mostrarGaleria: false,
-  mostrarSubirFotos: false,
+  mostrarSubirFotos: true,
   galeria: [],
   hashtag: "",
-  enlaceCarpetaFotos: "",
+  // Página para subir fotos: guarda el original en Drive y una copia en el repo (rama "fotos")
+  enlaceCarpetaFotos: "subir-fotos.html",
 
   // Máximo de pases que un invitado puede confirmar (se puede bajar por link: ?pases=3)
   pasesMaximos: 10,
@@ -892,8 +898,10 @@ function pintarContenido(){
 
   // Subir fotos
   if (CONFIG.mostrarSubirFotos && CONFIG.enlaceCarpetaFotos) {
-    $("lnk-fotos").href = CONFIG.enlaceCarpetaFotos;
-    $("qr-fotos").src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=5B3A41&bgcolor=FFFFFF&data=${encodeURIComponent(CONFIG.enlaceCarpetaFotos)}`;
+    const urlFotos = new URL(CONFIG.enlaceCarpetaFotos, location.href).href;
+    $("lnk-fotos").href = urlFotos;
+    $("lnk-qr-fotos").href = urlFotos;
+    $("qr-fotos").src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=5B3A41&bgcolor=FFFFFF&data=${encodeURIComponent(urlFotos)}`;
     $("txt-hashtag").textContent = CONFIG.hashtag;
   } else {
     $("seccion-fotos").style.display = "none";

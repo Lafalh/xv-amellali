@@ -73,6 +73,25 @@ se ligaba por el texto del nombre):
   (mismo nombre normalizado) y tiene **Eliminar** → `Estado = Eliminado` en la hoja (no borra la fila).
 - El importador de Excel de la boda quedó oculto en el croquis.
 
+## Fotos de los invitados (Drive + repositorio)
+
+- La invitación (las 3 versiones) tiene la sección **"Sube tus fotos"**: QR que también se toca y
+  botón, ambos a **`subir-fotos.html`** (página de invitados, sin nav de admin).
+- `subir-fotos.html`: nombre (prellenado si ya confirmó), Galería / Cámara, miniaturas con estado,
+  máx. 30 MB por archivo. Cada foto se manda **dos veces** al Apps Script con la misma clave:
+  **original → carpeta de Google Drive** y **copia comprimida en el celular (1600 px, JPG ~300 KB) →
+  rama `fotos` del repo** (`fotos/AAAA-MM-DD/<clave>.jpg`). Los videos solo van a Drive.
+- Apps Script: `subirFoto` (Drive / GitHub API) + pestaña **`Fotos`** de la hoja
+  (`Fecha | Clave | Autor | ID invitado | Tipo | Archivo | Drive | Repo`) + `?accion=fotos`.
+  Necesita en **Propiedades del script**: `GITHUB_TOKEN` (fine-grained, solo este repo,
+  Contents: Read and write). Opcionales: `GITHUB_REPO`, `GITHUB_RAMA`, `DRIVE_CARPETA`.
+  La rama `fotos` y la carpeta de Drive se crean solas. **El token nunca va en los HTML.**
+- Las fotos NO van a `main`: cada commit a `main` republica Pages (límite ~10/hora).
+- Panel **`fotos.html`** (organizadores): galería desde la copia del repo
+  (`raw.githubusercontent.com/<repo>/fotos/...`), filtro por quién subió, visor, link al original en
+  Drive, botón a la carpeta y **"Imprimir QR para las mesas"** (tarjeta lista para imprimir).
+- Ojo: el repo es **público**, así que las copias comprimidas se pueden ver con el link directo.
+
 ### Paneles de administración (copiados de la boda y adaptados)
 
 | Archivo | Qué es |
@@ -140,4 +159,5 @@ Ornamentos generados en JS como SVG: `SVG_MARCO`, `SVG_FILIGRANA`, `DAMASCO`, `E
 - El croquis trae el **plano del salón de la boda** (36 mesas redondas de 10 + Quinceañera, Pastel,
   Dulces, pista). Hay que ajustarlo al Auditorio Ejidal Ayotla cuando se sepa el acomodo real.
 - Confirmar con la clienta la hora de la misa: el mensaje dice 14:45 y el programa 15:00.
-- Galería y Subir fotos están apagadas (`mostrarGaleria`, `mostrarSubirFotos`).
+- Galería de la invitación apagada (`mostrarGaleria`). Subir fotos ya está activa.
+- Crear el `GITHUB_TOKEN` (fine-grained, solo el repo xv-amellali, Contents: Read and write) y ponerlo en las Propiedades del script; poner la URL `/exec` también en `subir-fotos.html` y `fotos.html`.

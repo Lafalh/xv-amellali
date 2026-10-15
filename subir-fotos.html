@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sube tus fotos · XV de Amellali</title>
+<meta name="description" content="Comparte las fotos y videos que tomes en los XV años de Amellali">
+<meta name="robots" content="noindex, nofollow">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Pinyon+Script&family=Jost:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- ================================================================
+     Página a la que llevan el QR y el botón "Subir mis fotos" de la
+     invitación. Cada archivo se manda al Apps Script dos veces:
+       1) el original (foto o video) → carpeta de Google Drive
+       2) la foto comprimida aquí mismo (~1600 px) → rama "fotos" del repo
+     Los invitados NO ven las fotos de otros: solo el panel fotos.html.
+     Es página de invitados: no lleva la barra .nav-sitio de los paneles.
+     ================================================================ -->
+<style>
+:root{
+  --tinta:#5B3A41; --titulo:#A64D69; --vino:#F6C9D5; --carmesi:#C9637F;
+  --pergamino:#FFFAF8; --pergamino-2:#F5E1E7; --oro:#C9A227; --oro-texto:#8F6B17;
+  --blanco:#FFFFFF; --alerta:#A3352F; --exito:#3E7C53;
+  --capitular:"Cinzel Decorative", serif; --script:"Pinyon Script", cursive;
+  --texto:"Cormorant Garamond", serif; --etiqueta:"Jost", sans-serif;
+  --sombra:0 18px 40px -18px rgba(150,80,100,.38);
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{
+  font-family:var(--texto); font-size:1.12rem; line-height:1.5; color:var(--tinta);
+  background:var(--vino);
+  background-image:radial-gradient(ellipse at top, rgba(255,255,255,.75) 0%, rgba(246,201,213,0) 70%);
+  min-height:100vh; padding:28px 16px 60px;
+}
+.envoltura{ max-width:520px; margin:0 auto; }
+.tarjeta{
+  background:var(--blanco); border-radius:22px; padding:30px 22px 26px;
+  outline:1px solid var(--oro); outline-offset:-9px; box-shadow:var(--sombra);
+}
+.centro{ text-align:center; }
+.grabado{ width:84px; height:70px; margin:0 auto 6px; color:var(--titulo); }
+.grabado svg{ width:100%; height:100%; }
+.etiqueta{ font-family:var(--etiqueta); font-size:.7rem; letter-spacing:.24em; text-transform:uppercase; color:var(--oro-texto); }
+h1{ font-family:var(--capitular); font-weight:700; color:var(--titulo); font-size:clamp(1.7rem, 8vw, 2.2rem); line-height:1.15; margin-top:4px; }
+.para{ font-family:var(--script); font-size:1.7rem; color:var(--oro-texto); line-height:1.2; }
+.intro{ margin:12px auto 0; max-width:400px; }
+
+.campo{ margin-top:22px; text-align:left; }
+.campo label{ display:block; font-family:var(--etiqueta); font-size:.78rem; letter-spacing:.04em; margin-bottom:6px; }
+.campo input{ width:100%; min-height:48px; padding:0 16px; border-radius:12px; border:1px solid transparent;
+              background:var(--pergamino-2); font-family:var(--texto); font-size:1.08rem; color:var(--tinta); }
+.campo input:focus{ outline:none; border-color:var(--oro); background:var(--blanco); }
+
+.elegir{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px; }
+.boton{
+  display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:52px; padding:0 18px;
+  border-radius:999px; border:1px solid var(--oro); background:var(--blanco); color:var(--tinta);
+  font-family:var(--etiqueta); font-size:.76rem; letter-spacing:.1em; text-transform:uppercase; font-weight:500;
+  cursor:pointer; text-decoration:none; transition:background .2s, color .2s, transform .1s;
+}
+.boton:active{ transform:translateY(1px); }
+.boton:hover{ background:var(--pergamino-2); }
+.boton--solido{ background:var(--titulo); border-color:var(--titulo); color:#fff; width:100%; margin-top:18px; font-size:.82rem; }
+.boton--solido:hover{ background:#8E3F58; }
+.boton[disabled]{ opacity:.5; cursor:not-allowed; }
+.boton svg{ width:20px; height:20px; flex:0 0 auto; }
+:focus-visible{ outline:2px solid var(--titulo); outline-offset:3px; }
+input[type=file]{ position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+.nota{ font-family:var(--etiqueta); font-size:.78rem; color:var(--oro-texto); margin-top:12px; line-height:1.5; text-align:center; }
+
+.miniaturas{ display:grid; grid-template-columns:repeat(auto-fill, minmax(92px, 1fr)); gap:8px; margin-top:18px; }
+.mini{ position:relative; aspect-ratio:1/1; border-radius:12px; overflow:hidden; background:var(--pergamino-2); }
+.mini img, .mini video{ width:100%; height:100%; object-fit:cover; display:block; }
+.mini .tipo-video{ position:absolute; left:6px; bottom:6px; background:rgba(91,58,65,.75); color:#fff; border-radius:999px;
+                   font-family:var(--etiqueta); font-size:.62rem; padding:2px 8px; }
+.mini .quitar{ position:absolute; top:4px; right:4px; width:30px; height:30px; border-radius:50%; border:none;
+               background:rgba(255,255,255,.92); color:var(--tinta); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.mini .quitar svg{ width:16px; height:16px; }
+.mini .estado{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:4px;
+               font-family:var(--etiqueta); font-size:.66rem; color:#fff; text-align:center; padding:6px; }
+.mini.subiendo .estado{ background:rgba(91,58,65,.55); }
+.mini.ok .estado{ background:rgba(62,124,83,.45); }
+.mini.error .estado{ background:rgba(163,53,47,.72); }
+.mini .estado svg{ width:28px; height:28px; }
+.spinner{ width:26px; height:26px; border:3px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:girar .8s linear infinite; }
+@keyframes girar{ to{ transform:rotate(360deg); } }
+
+.progreso{ margin-top:16px; }
+.barra{ height:8px; border-radius:999px; background:var(--pergamino-2); overflow:hidden; }
+.barra > span{ display:block; height:100%; width:0; background:linear-gradient(90deg, var(--oro), var(--titulo)); transition:width .3s ease; }
+.progreso p{ font-family:var(--etiqueta); font-size:.82rem; margin-top:8px; text-align:center; }
+
+.gracias{ text-align:center; padding:8px 0 0; }
+.gracias h2{ font-family:var(--capitular); color:var(--titulo); font-size:1.5rem; margin-top:6px; }
+.gracias p{ margin-top:6px; }
+.aviso-error{ margin-top:14px; padding:12px 14px; border-radius:12px; background:#FDECEA; color:var(--alerta); font-size:.98rem; text-align:center; }
+.volver{ display:block; text-align:center; margin-top:22px; font-family:var(--etiqueta); font-size:.78rem; letter-spacing:.1em;
+         text-transform:uppercase; color:var(--tinta); }
+.oculto{ display:none !important; }
+@media (prefers-reduced-motion: reduce){ *{ animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+</style>
+</head>
+<body>
+
+<script>
+const CONFIG = {
+  nombreQuinceanera: "Amellali",
+  // La misma URL /exec del Apps Script que en invitacion.html
+  urlConfirmaciones: "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT",
+  maxMB: 30,            // tamaño máximo por archivo (límite del Apps Script)
+  ladoMaxRepo: 1600,    // px del lado largo de la copia que va al repositorio
+  calidadRepo: 0.82
+};
+</script>
+
+<main class="envoltura">
+  <div class="tarjeta">
+    <div class="centro">
+      <div class="grabado" aria-hidden="true">
+        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="8" y="20" width="22" height="30" rx="2"/><path d="M12,20 V15 H24 V20"/>
+          <path d="M30,24 L44,18 V52 L30,46"/><path d="M34,22.5 V47.5 M38,20.8 V49.2 M42,19 V51" opacity=".7"/>
+          <rect x="44" y="26" width="6" height="18" rx="1"/><circle cx="53" cy="35" r="5"/><circle cx="53" cy="35" r="2.2"/>
+          <circle cx="19" cy="35" r="5" opacity=".7"/><path d="M8,58 L19,50 L30,58 M19,50 V62"/>
+        </svg>
+      </div>
+      <p class="etiqueta">Comparte el recuerdo</p>
+      <h1>Sube tus fotos</h1>
+      <p class="para">de los XV de <span id="txt-quinceanera"></span></p>
+      <p class="intro">Elige las fotos y videos que tomaste en la fiesta. Solo la familia de la quinceañera los verá.</p>
+    </div>
+
+    <div id="formulario">
+      <div class="campo">
+        <label for="in-autor">Tu nombre (para saber quién la tomó)</label>
+        <input type="text" id="in-autor" autocomplete="name" placeholder="Nombre y apellido">
+      </div>
+
+      <div class="elegir">
+        <label class="boton" for="in-galeria">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
+          Galería
+        </label>
+        <label class="boton" for="in-camara">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3.5"/></svg>
+          Cámara
+        </label>
+        <input type="file" id="in-galeria" accept="image/*,video/*" multiple>
+        <input type="file" id="in-camara" accept="image/*" capture="environment">
+      </div>
+      <p class="nota" id="txt-limite"></p>
+
+      <div class="miniaturas" id="miniaturas" aria-live="polite"></div>
+
+      <div class="progreso oculto" id="progreso" role="status" aria-live="polite">
+        <div class="barra"><span id="barra"></span></div>
+        <p id="txt-progreso"></p>
+      </div>
+      <p class="aviso-error oculto" id="aviso-error"></p>
+
+      <button class="boton boton--solido" id="btn-subir" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
+        <span id="txt-btn-subir">Elige fotos para subir</span>
+      </button>
+    </div>
+
+    <div class="gracias oculto" id="gracias">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="#E48AA3" aria-hidden="true"><path d="M12 21s-7.5-4.6-10.1-9.3C.4 8.7 1.9 5 5.4 4.3c2-.4 3.9.5 5 2.1a5.9 5.9 0 0 1 5-2.1c3.5.7 5 4.4 3.5 7.4C19.5 16.4 12 21 12 21z"/></svg>
+      <h2>¡Gracias!</h2>
+      <p id="txt-gracias"></p>
+      <button class="boton boton--solido" id="btn-mas">Subir más fotos</button>
+    </div>
+  </div>
+  <a class="volver" href="invitacion.html">← Volver a la invitación</a>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const CLAVE_INVITADO = "xv-amellali-invitado";   // la misma que usa la invitación
+const ICONO_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+const ICONO_ERROR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>';
+const ICONO_QUITAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+
+let archivos = [];   // { file, clave, url, estado: pendiente|subiendo|ok|error, error }
+let subiendo = false;
+
+function invitadoGuardado(){
+  try { return JSON.parse(localStorage.getItem(CLAVE_INVITADO) || "null"); } catch (e) { return null; }
+}
+function nuevaClave(){
+  const l = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  return Date.now().toString(36).toUpperCase() + "-" + Array.from({ length: 5 }, () => l[Math.floor(Math.random() * l.length)]).join("");
+}
+function mb(bytes){ return (bytes / 1048576).toFixed(1); }
+function configurado(){ return CONFIG.urlConfirmaciones && !CONFIG.urlConfirmaciones.startsWith("PEGA_AQUI"); }
+
+/* ---------- elegir archivos ---------- */
+function agregar(lista){
+  for (const file of lista){
+    if (!/^(image|video)\//.test(file.type || "image/")) continue;
+    const a = { file, clave: nuevaClave(), url: URL.createObjectURL(file), estado: "pendiente", error: "" };
+    if (file.size > CONFIG.maxMB * 1048576){ a.estado = "error"; a.error = `Pesa ${mb(file.size)} MB (máx. ${CONFIG.maxMB})`; }
+    archivos.push(a);
+  }
+  render();
+}
+
+function render(){
+  $("miniaturas").innerHTML = archivos.map((a, i) => {
+    const esVideo = (a.file.type || "").startsWith("video/");
+    const media = esVideo ? `<video src="${a.url}" muted playsinline preload="metadata"></video><span class="tipo-video">Video</span>`
+                          : `<img src="${a.url}" alt="">`;
+    const estado = a.estado === "subiendo" ? `<span class="spinner"></span>Subiendo…`
+                 : a.estado === "ok" ? `${ICONO_OK}Subida`
+                 : a.estado === "error" ? `${ICONO_ERROR}${a.error}` : "";
+    const quitar = (a.estado === "pendiente" || a.estado === "error") && !subiendo
+      ? `<button class="quitar" data-quitar="${i}" aria-label="Quitar este archivo">${ICONO_QUITAR}</button>` : "";
+    return `<div class="mini ${a.estado}">${media}<div class="estado">${estado}</div>${quitar}</div>`;
+  }).join("");
+  $("miniaturas").querySelectorAll("[data-quitar]").forEach(b => b.addEventListener("click", () => {
+    const i = Number(b.dataset.quitar);
+    URL.revokeObjectURL(archivos[i].url);
+    archivos.splice(i, 1);
+    render();
+  }));
+  const pendientes = archivos.filter(a => a.estado === "pendiente").length;
+  $("btn-subir").disabled = subiendo || pendientes === 0;
+  $("txt-btn-subir").textContent = subiendo ? "Subiendo…"
+    : pendientes ? `Subir ${pendientes} ${pendientes === 1 ? "archivo" : "archivos"}` : "Elige fotos para subir";
+}
+
+/* ---------- preparar archivos ---------- */
+function aBase64(blob){
+  return new Promise((ok, mal) => {
+    const r = new FileReader();
+    r.onload = () => ok(String(r.result).split(",")[1]);
+    r.onerror = () => mal(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+
+/* Copia ligera para el repositorio: lado largo de 1600 px en JPG.
+   Si el navegador no puede leer el formato (ej. algunos HEIC), regresa null
+   y esa foto solo se guarda en Drive (con su original). */
+async function comprimir(file){
+  let fuente = null, ancho = 0, alto = 0;
+  try {
+    fuente = await createImageBitmap(file, { imageOrientation: "from-image" });
+    ancho = fuente.width; alto = fuente.height;
+  } catch (e) {
+    fuente = await new Promise(ok => {
+      const img = new Image();
+      img.onload = () => ok(img); img.onerror = () => ok(null);
+      img.src = URL.createObjectURL(file);
+    });
+    if (!fuente) return null;
+    ancho = fuente.naturalWidth; alto = fuente.naturalHeight;
+  }
+  const escala = Math.min(1, CONFIG.ladoMaxRepo / Math.max(ancho, alto));
+  const lienzo = document.createElement("canvas");
+  lienzo.width = Math.round(ancho * escala); lienzo.height = Math.round(alto * escala);
+  lienzo.getContext("2d").drawImage(fuente, 0, 0, lienzo.width, lienzo.height);
+  return await new Promise(ok => lienzo.toBlob(ok, "image/jpeg", CONFIG.calidadRepo));
+}
+
+async function enviar(cuerpo){
+  const r = await fetch(CONFIG.urlConfirmaciones, {
+    method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(cuerpo)
+  });
+  const d = await r.json();
+  if (!d.ok) throw new Error(d.error || "No se pudo subir");
+  return d;
+}
+
+/* ---------- subir (uno por uno, para no saturar la señal del celular) ---------- */
+async function subirTodo(){
+  if (!configurado()){
+    mostrarError("La subida de fotos todavía no está activada. Inténtalo más tarde.");
+    return;
+  }
+  const autor = $("in-autor").value.trim();
+  try { localStorage.setItem("xv-amellali-autor-fotos", autor); } catch (e) {}
+  const invitado = invitadoGuardado();
+  const cola = archivos.filter(a => a.estado === "pendiente");
+  subiendo = true; ocultarError();
+  $("progreso").classList.remove("oculto");
+  let hechos = 0, fallidos = 0;
+  for (const a of cola){
+    a.estado = "subiendo"; render();
+    $("txt-progreso").textContent = `Subiendo ${hechos + fallidos + 1} de ${cola.length}…`;
+    try {
+      const tipo = a.file.type || "image/jpeg";
+      const comun = { accion: "subirFoto", clave: a.clave, autor, idInvitado: invitado ? invitado.id : "", nombreArchivo: a.file.name };
+      // 1) original a Drive
+      await enviar(Object.assign({ destino: "drive", tipo, datos: await aBase64(a.file) }, comun));
+      // 2) copia comprimida al repositorio (solo fotos; si falla, la foto ya está a salvo en Drive)
+      if (tipo.startsWith("image/")){
+        try {
+          const ligera = await comprimir(a.file);
+          if (ligera) await enviar(Object.assign({ destino: "repo", tipo: "image/jpeg", datos: await aBase64(ligera) }, comun));
+        } catch (e) { console.warn("No se guardó la copia en el repositorio:", e); }
+      }
+      a.estado = "ok"; hechos++;
+    } catch (e){
+      a.estado = "error"; a.error = "No se pudo subir"; fallidos++;
+    }
+    $("barra").style.width = `${Math.round((hechos + fallidos) / cola.length * 100)}%`;
+    render();
+  }
+  subiendo = false;
+  $("progreso").classList.add("oculto");
+  render();
+  if (fallidos){
+    mostrarError(`${fallidos} ${fallidos === 1 ? "archivo no se pudo subir" : "archivos no se pudieron subir"}. Revisa tu señal y vuelve a intentar con el botón de abajo.`);
+    archivos.filter(a => a.estado === "error" && a.error === "No se pudo subir").forEach(a => a.estado = "pendiente");
+    render();
+  } else {
+    $("txt-gracias").textContent = `Se ${hechos === 1 ? "subió 1 archivo" : `subieron ${hechos} archivos`}. ${CONFIG.nombreQuinceanera} los va a guardar con mucho cariño.`;
+    $("formulario").classList.add("oculto");
+    $("gracias").classList.remove("oculto");
+  }
+}
+
+function mostrarError(m){ $("aviso-error").textContent = m; $("aviso-error").classList.remove("oculto"); }
+function ocultarError(){ $("aviso-error").classList.add("oculto"); }
+
+/* ---------- inicio ---------- */
+$("txt-quinceanera").textContent = CONFIG.nombreQuinceanera;
+$("txt-limite").textContent = `Fotos y videos de hasta ${CONFIG.maxMB} MB cada uno. Puedes elegir varios a la vez.`;
+(function prellenarAutor(){
+  let autor = "";
+  try { autor = localStorage.getItem("xv-amellali-autor-fotos") || ""; } catch (e) {}
+  const inv = invitadoGuardado();
+  $("in-autor").value = autor || (inv && inv.nombre) || "";
+})();
+$("in-galeria").addEventListener("change", e => { agregar(e.target.files); e.target.value = ""; });
+$("in-camara").addEventListener("change", e => { agregar(e.target.files); e.target.value = ""; });
+$("btn-subir").addEventListener("click", subirTodo);
+$("btn-mas").addEventListener("click", () => {
+  archivos.forEach(a => URL.revokeObjectURL(a.url));
+  archivos = []; $("barra").style.width = "0";
+  $("gracias").classList.add("oculto"); $("formulario").classList.remove("oculto");
+  render();
+});
+window.addEventListener("beforeunload", e => { if (subiendo){ e.preventDefault(); e.returnValue = ""; } });
+render();
+</script>
+</body>
+</html>

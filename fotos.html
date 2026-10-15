@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fotos · XV de Amellali</title>
+<meta name="robots" content="noindex, nofollow">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Pinyon+Script&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!-- ================================================================
+     Panel de organizadores: FOTOS que subieron los invitados desde
+     subir-fotos.html. La lista sale de la pestaña "Fotos" de la hoja
+     (?accion=fotos). Las miniaturas se ven desde la copia comprimida del
+     repositorio (rama "fotos"); el original y los videos están en Drive.
+     ================================================================ -->
+<style>
+:root{
+  --tinta:#5B3A41; --titulo:#A64D69; --vino:#F6C9D5; --pergamino:#FFFAF8; --pergamino-2:#F5E1E7;
+  --rosa-viejo:#8F6B17; --oro:#C9A227; --blanco:#FFFFFF; --alerta:#A3352F;
+  --capitular:"Cinzel Decorative", serif; --display:"Cormorant Garamond", serif; --texto:"Jost", sans-serif; --script:"Pinyon Script", cursive;
+  --sombra:0 18px 40px -18px rgba(150,80,100,.38);
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{ font-family:var(--texto); background:var(--pergamino); color:var(--tinta); font-size:15px; min-height:100vh; }
+:focus-visible{ outline:2px solid var(--titulo); outline-offset:2px; }
+
+.nav-sitio{ display:flex; background:var(--vino); border-bottom:2px solid var(--oro); }
+.nav-sitio a{ flex:1 1 auto; display:flex; align-items:center; justify-content:center; min-height:48px; padding:0 8px;
+              color:var(--tinta); text-decoration:none; font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; font-weight:500;
+              border-right:1px solid rgba(201,162,39,.45); transition:background .2s, color .2s; }
+.nav-sitio a:last-child{ border-right:none; }
+.nav-sitio a:hover{ background:var(--titulo); color:#fff; }
+
+header{ padding:16px 20px 12px; background:var(--blanco); border-bottom:1px solid var(--pergamino-2);
+        display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+header .sub{ font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--rosa-viejo); }
+header h1{ font-family:var(--capitular); font-weight:700; color:var(--titulo); font-size:1.45rem; }
+.acciones{ display:flex; gap:8px; flex-wrap:wrap; }
+
+.boton{ display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:40px; padding:0 16px;
+        border-radius:999px; border:1px solid var(--oro); background:var(--blanco); color:var(--tinta); cursor:pointer;
+        font-family:var(--texto); font-size:.68rem; letter-spacing:.08em; text-transform:uppercase; text-decoration:none;
+        transition:background .2s, color .2s; white-space:nowrap; }
+.boton:hover{ background:var(--oro); color:#fff; }
+.boton--solido{ background:var(--titulo); border-color:var(--titulo); color:#fff; }
+.boton--solido:hover{ background:var(--oro); border-color:var(--oro); }
+.boton[aria-disabled="true"]{ opacity:.5; pointer-events:none; }
+.ico{ width:17px; height:17px; flex:0 0 auto; }
+
+.resumen{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; padding:12px 20px; background:var(--blanco); border-bottom:1px solid var(--pergamino-2); }
+.dato{ border:1px solid var(--pergamino-2); border-radius:12px; padding:8px 6px; text-align:center; background:var(--pergamino); }
+.dato .num{ font-family:var(--capitular); font-weight:700; color:var(--titulo); font-size:1.3rem; line-height:1.1; }
+.dato .lbl{ font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--rosa-viejo); }
+
+.barra{ padding:12px 20px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.barra label{ font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--rosa-viejo); display:inline-flex; align-items:center; gap:8px; }
+.barra select{ min-height:40px; padding:0 30px 0 12px; border-radius:999px; border:1px solid var(--pergamino-2); background:var(--blanco);
+               font-family:var(--texto); font-size:.88rem; color:var(--tinta); text-transform:none; letter-spacing:0; max-width:240px; }
+
+.galeria{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px; padding:4px 20px 40px; max-width:1300px; margin:0 auto; }
+.foto{ position:relative; aspect-ratio:1/1; border-radius:14px; overflow:hidden; background:var(--pergamino-2); cursor:pointer;
+       border:none; padding:0; box-shadow:0 8px 20px -16px rgba(150,80,100,.7); }
+.foto img{ width:100%; height:100%; object-fit:cover; display:block; transition:transform .3s ease; }
+.foto:hover img{ transform:scale(1.04); }
+.foto .pie-foto{ position:absolute; left:0; right:0; bottom:0; padding:18px 8px 6px; text-align:left;
+                 background:linear-gradient(transparent, rgba(91,58,65,.75)); color:#fff; font-size:.72rem; line-height:1.25; }
+.foto .sin-img{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+                color:var(--titulo); font-size:.75rem; text-align:center; padding:10px; }
+.foto .sin-img svg{ width:34px; height:34px; }
+.etq-video{ position:absolute; top:6px; left:6px; background:rgba(91,58,65,.8); color:#fff; border-radius:999px; font-size:.62rem; padding:2px 8px; letter-spacing:.04em; }
+
+.estado{ text-align:center; padding:50px 20px; color:var(--tinta); opacity:.85; line-height:1.7; }
+.estado p + p{ margin-top:6px; }
+.estado:empty{ display:none; }
+.estado .boton{ margin-top:14px; }
+.spinner{ display:inline-block; width:18px; height:18px; margin-right:10px; vertical-align:-4px; border:2px solid var(--pergamino-2);
+          border-top-color:var(--titulo); border-radius:50%; animation:girar .8s linear infinite; }
+@keyframes girar{ to{ transform:rotate(360deg); } }
+
+/* visor */
+.visor{ position:fixed; inset:0; z-index:50; background:rgba(40,24,28,.92); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px; }
+.visor.oculto{ display:none; }
+.visor img{ max-width:100%; max-height:calc(100vh - 150px); border-radius:10px; box-shadow:0 20px 50px rgba(0,0,0,.5); }
+.visor .info{ color:#fff; text-align:center; margin-top:12px; font-size:.9rem; }
+.visor .info strong{ font-family:var(--display); font-style:italic; font-size:1.15rem; font-weight:500; }
+.visor .fila{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; justify-content:center; }
+.visor .cerrar, .visor .flecha{ position:absolute; width:48px; height:48px; border-radius:50%; border:none; background:rgba(255,255,255,.15);
+                                color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.visor .cerrar{ top:14px; right:14px; }
+.visor .flecha.izq{ left:10px; top:50%; transform:translateY(-50%); }
+.visor .flecha.der{ right:10px; top:50%; transform:translateY(-50%); }
+.visor .cerrar:hover, .visor .flecha:hover{ background:rgba(255,255,255,.3); }
+.visor svg{ width:22px; height:22px; }
+
+/* tarjeta para imprimir y poner en las mesas */
+.impresion{ display:none; }
+@media print{
+  body > *:not(.impresion){ display:none !important; }
+  .impresion{ display:flex !important; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+              min-height:95vh; padding:30px; color:#5B3A41; }
+  .impresion .marco{ border:3px double #C9A227; border-radius:24px; padding:40px 36px; max-width:520px; }
+  .impresion .etq{ font-family:var(--texto); letter-spacing:.3em; text-transform:uppercase; font-size:11pt; color:#8F6B17; }
+  .impresion h2{ font-family:var(--capitular); font-size:26pt; color:#A64D69; margin:8px 0 4px; }
+  .impresion .script{ font-family:var(--script); font-size:22pt; color:#8F6B17; }
+  .impresion img{ width:240px; height:240px; margin:22px auto 16px; display:block; }
+  .impresion p{ font-family:var(--display); font-size:15pt; line-height:1.4; }
+  .impresion .url{ font-family:var(--texto); font-size:9pt; margin-top:10px; color:#8F6B17; word-break:break-all; }
+}
+
+@media (pointer:coarse){ .boton, .barra select{ min-height:44px; } }
+@media (max-width:600px){
+  header, .resumen, .barra{ padding-left:16px; padding-right:16px; }
+  .galeria{ grid-template-columns:repeat(3, 1fr); gap:6px; padding:4px 10px 40px; }
+  .foto{ border-radius:10px; }
+  .foto .pie-foto{ font-size:.66rem; }
+  .acciones{ width:100%; }
+  .acciones .boton{ flex:1 1 auto; }
+}
+@media (prefers-reduced-motion: reduce){ *{ animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+</style>
+</head>
+<body>
+
+<nav class="nav-sitio">
+  <a href="index.html">Dedicatorias</a>
+  <a href="confirmacion.html">Invitados</a>
+  <a href="croquis-mesas.html">Croquis</a>
+  <a href="invitacion.html">Invitación</a>
+</nav>
+
+<script>
+const CONFIG = {
+  nombreQuinceanera: "Amellali",
+  // La misma URL /exec del Apps Script que en invitacion.html
+  urlConfirmaciones: "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT",
+  paginaSubir: "subir-fotos.html"
+};
+</script>
+
+<header>
+  <div>
+    <p class="sub">Panel privado</p>
+    <h1>Fotos de los invitados</h1>
+  </div>
+  <div class="acciones">
+    <a class="boton boton--solido" id="lnk-drive" target="_blank" rel="noopener" aria-disabled="true">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9l-.8-1.2A2 2 0 0 0 7.9 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z"/></svg>
+      Carpeta de Drive (originales)</a>
+    <button class="boton" id="btn-imprimir">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/></svg>
+      Imprimir QR para las mesas</button>
+    <button class="boton" id="btn-actualizar">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/></svg>
+      Actualizar</button>
+  </div>
+</header>
+
+<div class="resumen" id="resumen"></div>
+<div class="barra">
+  <label>Subidas por
+    <select id="filtro-autor" aria-label="Filtrar por quién las subió"><option value="">Todos</option></select>
+  </label>
+</div>
+
+<div id="estado" class="estado" role="status" aria-live="polite"></div>
+<div class="galeria" id="galeria"></div>
+
+<!-- visor de una foto -->
+<div class="visor oculto" id="visor" role="dialog" aria-modal="true" aria-label="Foto ampliada">
+  <button class="cerrar" id="visor-cerrar" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  <button class="flecha izq" id="visor-ant" aria-label="Foto anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+  <img id="visor-img" alt="">
+  <button class="flecha der" id="visor-sig" aria-label="Foto siguiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+  <div class="info" id="visor-info"></div>
+  <div class="fila" id="visor-acciones"></div>
+</div>
+
+<!-- tarjeta que sale al imprimir -->
+<div class="impresion" aria-hidden="true">
+  <div class="marco">
+    <p class="etq">Comparte el recuerdo</p>
+    <h2>Sube tus fotos</h2>
+    <p class="script">de los XV de <span id="imp-nombre"></span></p>
+    <img id="imp-qr" alt="">
+    <p>Escanea el código con la cámara de tu celular<br>y comparte las fotos y videos de esta noche.</p>
+    <p class="url" id="imp-url"></p>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const ICONO_VIDEO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m16 10 6-3v10l-6-3"/></svg>';
+const ICONO_FOTO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>';
+
+let fotos = [];       // de la pestaña "Fotos"
+let repoInfo = { repo: "", rama: "fotos" };
+let visibles = [];
+let actual = -1;
+
+function esc(t){ const d = document.createElement("div"); d.textContent = t || ""; return d.innerHTML; }
+function urlSubir(){ return new URL(CONFIG.paginaSubir, location.href).href; }
+function urlRepo(ruta){ return ruta ? `https://raw.githubusercontent.com/${repoInfo.repo}/${repoInfo.rama}/${ruta}` : ""; }
+function fecha(iso){
+  const d = new Date(iso);
+  return isNaN(d) ? "" : d.toLocaleString("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
+function renderResumen(){
+  const nFotos = fotos.filter(f => f.tipo.startsWith("image/")).length;
+  const nVideos = fotos.filter(f => f.tipo.startsWith("video/")).length;
+  const personas = new Set(fotos.map(f => f.autor.trim().toLowerCase() || "—")).size;
+  $("resumen").innerHTML = `
+    <div class="dato"><div class="num">${nFotos}</div><div class="lbl">Fotos</div></div>
+    <div class="dato"><div class="num">${nVideos}</div><div class="lbl">Videos</div></div>
+    <div class="dato"><div class="num">${fotos.length ? personas : 0}</div><div class="lbl">Personas</div></div>`;
+}
+
+function renderFiltro(){
+  const autores = [...new Set(fotos.map(f => f.autor.trim() || "Sin nombre"))].sort((a, b) => a.localeCompare(b, "es"));
+  const sel = $("filtro-autor"), previo = sel.value;
+  sel.innerHTML = `<option value="">Todos (${fotos.length})</option>` + autores.map(a =>
+    `<option value="${esc(a)}">${esc(a)} (${fotos.filter(f => (f.autor.trim() || "Sin nombre") === a).length})</option>`).join("");
+  sel.value = autores.includes(previo) ? previo : "";
+}
+
+function renderGaleria(){
+  const autor = $("filtro-autor").value;
+  visibles = autor ? fotos.filter(f => (f.autor.trim() || "Sin nombre") === autor) : fotos;
+  $("galeria").innerHTML = visibles.map((f, i) => {
+    const esVideo = f.tipo.startsWith("video/");
+    const img = urlRepo(f.repo);
+    const cuerpo = img ? `<img src="${img}" alt="Foto de ${esc(f.autor || "un invitado")}" loading="lazy">`
+      : `<div class="sin-img">${esVideo ? ICONO_VIDEO : ICONO_FOTO}${esVideo ? "Video" : "Solo en Drive"}</div>`;
+    return `<button class="foto" data-i="${i}" aria-label="Ver ${esVideo ? "video" : "foto"} de ${esc(f.autor || "un invitado")}">
+      ${cuerpo}${esVideo ? `<span class="etq-video">Video</span>` : ""}
+      <span class="pie-foto">${esc(f.autor || "Sin nombre")}</span></button>`;
+  }).join("");
+  $("galeria").querySelectorAll("[data-i]").forEach(b => b.addEventListener("click", () => abrirVisor(Number(b.dataset.i))));
+}
+
+/* ---------- visor ---------- */
+function abrirVisor(i){
+  const f = visibles[i];
+  if (!f) return;
+  // videos y fotos sin copia en el repo se abren directo en Drive
+  if (!f.repo){ if (f.drive) window.open(f.drive, "_blank", "noopener"); return; }
+  actual = i;
+  $("visor-img").src = urlRepo(f.repo);
+  $("visor-img").alt = `Foto de ${f.autor || "un invitado"}`;
+  $("visor-info").innerHTML = `<strong>${esc(f.autor || "Sin nombre")}</strong><br>${fecha(f.fecha)} · ${actual + 1} de ${visibles.length}`;
+  $("visor-acciones").innerHTML = f.drive
+    ? `<a class="boton boton--solido" href="${f.drive}" target="_blank" rel="noopener">Ver original en Drive</a>` : "";
+  $("visor").classList.remove("oculto");
+  $("visor-cerrar").focus();
+}
+function moverVisor(paso){
+  if (actual < 0) return;
+  let i = actual;
+  for (let k = 0; k < visibles.length; k++){
+    i = (i + paso + visibles.length) % visibles.length;
+    if (visibles[i].repo){ abrirVisor(i); return; }
+  }
+}
+function cerrarVisor(){ $("visor").classList.add("oculto"); actual = -1; }
+
+/* ---------- carga ---------- */
+async function cargar(){
+  $("estado").innerHTML = '<span class="spinner" aria-hidden="true"></span>Cargando…';
+  $("galeria").innerHTML = "";
+  if (!CONFIG.urlConfirmaciones || CONFIG.urlConfirmaciones.startsWith("PEGA_AQUI")){
+    $("estado").textContent = "Falta configurar CONFIG.urlConfirmaciones en este archivo (la misma URL /exec que en invitacion.html).";
+    renderResumen(); return;
+  }
+  try{
+    const r = await fetch(CONFIG.urlConfirmaciones + "?accion=fotos");
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || "respuesta inválida");
+    fotos = d.fotos || [];
+    repoInfo = { repo: d.repo || "", rama: d.rama || "fotos" };
+    if (d.carpeta){ $("lnk-drive").href = d.carpeta; $("lnk-drive").removeAttribute("aria-disabled"); }
+    renderResumen(); renderFiltro();
+    if (!fotos.length){
+      $("estado").innerHTML = `<p>Todavía nadie ha subido fotos.</p>
+        <p>Los invitados suben sus fotos desde la invitación o escaneando el QR que puedes imprimir para las mesas.</p>
+        <a class="boton" href="${CONFIG.paginaSubir}" target="_blank" rel="noopener">Abrir la página para subir fotos</a>`;
+      return;
+    }
+    $("estado").innerHTML = "";
+    renderGaleria();
+  }catch(err){
+    $("estado").innerHTML = "No se pudo cargar.<br><small>" + esc(err.message) + "</small>";
+  }
+}
+
+/* ---------- eventos ---------- */
+$("btn-actualizar").addEventListener("click", cargar);
+$("filtro-autor").addEventListener("change", renderGaleria);
+$("btn-imprimir").addEventListener("click", () => {
+  const img = $("imp-qr");
+  if (img.complete && img.naturalWidth) window.print();
+  else img.onload = () => window.print();
+});
+$("visor-cerrar").addEventListener("click", cerrarVisor);
+$("visor-ant").addEventListener("click", () => moverVisor(-1));
+$("visor-sig").addEventListener("click", () => moverVisor(1));
+$("visor").addEventListener("click", e => { if (e.target.id === "visor") cerrarVisor(); });
+document.addEventListener("keydown", e => {
+  if ($("visor").classList.contains("oculto")) return;
+  if (e.key === "Escape") cerrarVisor();
+  if (e.key === "ArrowLeft") moverVisor(-1);
+  if (e.key === "ArrowRight") moverVisor(1);
+});
+
+// tarjeta para imprimir
+$("imp-nombre").textContent = CONFIG.nombreQuinceanera;
+$("imp-url").textContent = urlSubir();
+$("imp-qr").src = `https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=0&color=5B3A41&bgcolor=FFFFFF&data=${encodeURIComponent(urlSubir())}`;
+
+cargar();
+</script>
+</body>
+</html>
