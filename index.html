@@ -150,13 +150,6 @@ h1,h2{ font-family:var(--display); font-weight:500; }
 
 .seccion-titulo{ margin:50px auto 16px; text-align:center; max-width:640px; }
 .seccion-titulo h2{ font-size:1.2rem; font-style:italic; }
-.tabla-confirmaciones{ width:100%; max-width:640px; margin:0 auto; border-collapse:collapse; font-size:.8rem; }
-.tabla-confirmaciones th, .tabla-confirmaciones td{
-  text-align:left; padding:8px 8px; border-bottom:1px solid var(--pergamino-2);
-}
-.tabla-confirmaciones th{
-  font-size:.64rem; letter-spacing:.08em; text-transform:uppercase; color:var(--rosa-viejo); font-weight:500;
-}
 
 .vacio, .estado{ text-align:center; opacity:.6; padding:30px 10px; font-size:.9rem; }
 .oculto{ display:none; }
@@ -210,8 +203,6 @@ h2, h3{ color:var(--titulo); }
 .carta .corazon, .mini-corazon{ color:var(--salvia); }
 .carta .mensaje{ font-size:1.18rem; }
 .seccion-titulo h2{ font-family:var(--capitular); font-style:normal; font-weight:700; font-size:1.25rem; }
-.tabla-confirmaciones{ max-width:760px; background:var(--blanco); border-radius:14px; overflow:hidden; box-shadow:var(--sombra); }
-.tabla-confirmaciones th{ background:var(--vino); color:var(--tinta); }
 .btn-flecha{ border-color:var(--oro); }
 
 /* ============================================================
@@ -259,27 +250,27 @@ a, button, select, .chip, .pestana{ -webkit-tap-highlight-color:transparent; }
 .fila-botones{ margin-bottom:6px !important; }
 .ultima-act{ text-align:center; font-size:.78rem; color:var(--rosa-viejo); min-height:1.2em; margin-bottom:30px; }
 .estado{ font-size:.95rem; }
-/* buscador de la tabla */
+/* buscador de dedicatorias */
 .seccion-titulo{ display:flex; flex-direction:column; align-items:center; gap:12px; }
 .buscador{ display:flex; align-items:center; gap:8px; width:100%; max-width:420px; padding:0 14px; min-height:44px;
            background:var(--blanco); border:1px solid var(--pergamino-2); border-radius:999px; color:var(--rosa-viejo); }
 .buscador input{ flex:1; border:none; background:transparent; font-family:var(--texto); font-size:.95rem; color:var(--tinta); min-height:42px; }
 .buscador input:focus{ outline:none; }
 .buscador:focus-within{ border-color:var(--titulo); box-shadow:0 0 0 3px rgba(166,77,105,.15); }
-.tabla-confirmaciones td{ font-size:.9rem; }
-/* en celular la tabla se vuelve tarjetas (nada de columnas apretadas) */
-@media (max-width:640px){
-  .tabla-confirmaciones{ background:transparent !important; box-shadow:none !important; border-radius:0 !important; }
-  .tabla-confirmaciones tr:first-child{ display:none; }
-  .tabla-confirmaciones tr{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px 10px; margin-bottom:12px;
-                            background:var(--blanco); border:1px solid var(--pergamino-2); border-radius:14px; padding:14px 16px;
-                            box-shadow:0 8px 20px -16px rgba(150,80,100,.6); }
-  .tabla-confirmaciones td{ border:none !important; padding:0 !important; font-size:.95rem; }
-  .tabla-confirmaciones td::before{ content:attr(data-label); display:block; font-size:.7rem; letter-spacing:.06em;
-                                    text-transform:uppercase; color:var(--rosa-viejo); margin-bottom:2px; }
-  .tabla-confirmaciones .td-nombre{ grid-column:1 / -1; font-weight:600; font-size:1.05rem; }
-  .tabla-confirmaciones .td-tel{ grid-column:span 2; }
-}
+
+/* -------- solo dedicatorias: muro con todas -------- */
+.resumen{ max-width:320px !important; }
+.todas{ margin-top:56px; }
+.todas .seccion-titulo h2{ font-size:1.35rem; }
+.muro{ columns:3 260px; column-gap:16px; max-width:1000px; margin:20px auto 0; }
+.nota{ break-inside:avoid; margin:0 0 16px; background:var(--blanco); border-radius:16px;
+       outline:1px solid var(--oro); outline-offset:-6px; box-shadow:0 10px 24px -18px rgba(150,80,100,.7);
+       padding:22px 20px 18px; text-align:center; }
+.nota-corazon{ width:18px; height:18px; color:#E48AA3; display:block; margin:0 auto 10px; }
+.nota blockquote{ margin:0; font-family:var(--display); font-style:italic; font-size:1.12rem; line-height:1.55; color:var(--tinta); }
+.nota figcaption{ margin-top:14px; font-family:var(--display); font-style:italic; font-size:1.02rem; color:var(--titulo); }
+.nota figcaption span{ display:block; margin-top:2px; font-family:var(--texto); font-style:normal; font-size:.72rem; letter-spacing:.05em; color:var(--rosa-viejo); }
+.todas .vacio.oculto{ display:none; }
 </style>
 </head>
 <body>
@@ -319,13 +310,15 @@ const CONFIG = {
   <div id="estado" class="estado" role="status" aria-live="polite"></div>
   <div id="cont-dedicatorias"></div>
 
-  <div class="seccion-titulo">
-    <h2>Lista de invitados</h2>
-    <label class="buscador"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="search" id="buscar-tabla" placeholder="Buscar por nombre o teléfono…" aria-label="Buscar invitado"></label>
-  </div>
-  <div style="overflow-x:auto;">
-    <table class="tabla-confirmaciones" id="tabla-confirmaciones"></table>
-  </div>
+  <!-- Todas las dedicatorias completas (la lista de invitados vive en confirmacion.html) -->
+  <section class="todas" id="seccion-todas" hidden>
+    <div class="seccion-titulo">
+      <h2>Todas las dedicatorias</h2>
+      <label class="buscador"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="search" id="buscar-dedicatoria" placeholder="Buscar por nombre o palabra…" aria-label="Buscar dedicatoria"></label>
+    </div>
+    <div class="muro" id="muro-dedicatorias"></div>
+    <p class="vacio oculto" id="sin-resultados">Ninguna dedicatoria coincide con la búsqueda.</p>
+  </section>
 </div>
 
 <script>
@@ -350,7 +343,7 @@ function escaparHTML(texto){
 async function cargarDatos(){
   $("estado").innerHTML = '<span class="spinner" aria-hidden="true"></span>Cargando…';
   $("cont-dedicatorias").innerHTML = "";
-  $("tabla-confirmaciones").innerHTML = "";
+  $("muro-dedicatorias").innerHTML = "";
   $("resumen").innerHTML = "";
 
   if (!CONFIG.urlConfirmaciones || CONFIG.urlConfirmaciones.startsWith("PEGA_AQUI")) {
@@ -532,50 +525,43 @@ function cambiarCarta(direccion){
 
 function pintarDatos(confirmaciones){
   const confirmados = confirmaciones.filter(c => c.asiste === "Sí");
-  const totalPersonas = confirmados.reduce((s,c) => s + (c.pases || 0), 0);
-  const totalAdultos = confirmados.reduce((s,c) => s + (c.adultos || 0), 0);
-  const totalNinos = confirmados.reduce((s,c) => s + (c.ninos || 0), 0);
   const conMensaje = confirmaciones.filter(c => c.mensaje && c.mensaje.trim());
 
+  // Este panel es solo de dedicatorias; los totales de personas, adultos y
+  // niños están en el panel Invitados (confirmacion.html).
   $("resumen").innerHTML = `
-    <div><div class="num">${confirmados.length}</div><div class="lbl">Confirmaron</div></div>
-    <div><div class="num">${totalPersonas}</div><div class="lbl">Personas</div></div>
-    <div><div class="num">${totalAdultos}</div><div class="lbl">Adultos</div></div>
-    <div><div class="num">${totalNinos}</div><div class="lbl">Niños -12</div></div>
     <div><div class="num">${conMensaje.length}</div><div class="lbl">Dedicatorias</div></div>
+    <div><div class="num">${confirmados.length}</div><div class="lbl">Confirmaron</div></div>
   `;
 
   listaDedicatorias = conMensaje;
   mostrarCarrusel();
 
-  if (confirmaciones.length === 0) {
-    $("tabla-confirmaciones").innerHTML = `<tr><td class="vacio">Aún no hay confirmaciones.</td></tr>`;
-  } else {
-    $("tabla-confirmaciones").innerHTML = `
-      <tr><th>Nombre</th><th>WhatsApp</th><th>Adultos</th><th>Niños</th><th>Total</th><th>Fecha</th></tr>
-      ${confirmaciones.map(c => `
-        <tr>
-          <td class="td-nombre">${escaparHTML(c.nombre)}</td>
-          <td class="td-tel" data-label="WhatsApp">${escaparHTML(c.telefono) || "—"}</td>
-          <td data-label="Adultos">${c.adultos || "—"}</td>
-          <td data-label="Niños">${c.ninos || 0}</td>
-          <td data-label="Total"><strong>${c.pases}</strong></td>
-          <td data-label="Confirmó">${formatearFecha(c.fecha)}</td>
-        </tr>
-      `).join("")}
-    `;
-  }
+  // Muro con todas las dedicatorias completas, para leerlas sin pasar una por una
+  $("seccion-todas").hidden = conMensaje.length === 0;
+  $("muro-dedicatorias").innerHTML = conMensaje.map(c => `
+    <figure class="nota">
+      <svg class="nota-corazon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-10.1-9.3C.4 8.7 1.9 5 5.4 4.3c2-.4 3.9.5 5 2.1a5.9 5.9 0 0 1 5-2.1c3.5.7 5 4.4 3.5 7.4C19.5 16.4 12 21 12 21z"/></svg>
+      <blockquote>«${escaparHTML(c.mensaje)}»</blockquote>
+      <figcaption>${escaparHTML(c.nombre)}<span>${formatearFecha(c.fecha)}</span></figcaption>
+    </figure>`).join("");
+  filtrarMuro();
+}
+
+function filtrarMuro(){
+  const normal = t => (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const q = normal($("buscar-dedicatoria").value.trim());
+  let visibles = 0;
+  document.querySelectorAll("#muro-dedicatorias .nota").forEach(n => {
+    const ver = !q || normal(n.textContent).includes(q);
+    n.style.display = ver ? "" : "none";
+    if (ver) visibles++;
+  });
+  $("sin-resultados").classList.toggle("oculto", visibles > 0 || !q);
 }
 
 $("btn-actualizar").addEventListener("click", cargarDatos);
-$("buscar-tabla").addEventListener("input", e => {
-  const q = e.target.value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  document.querySelectorAll("#tabla-confirmaciones tr").forEach((tr, i) => {
-    if (i === 0) return;   // encabezado
-    const t = tr.textContent.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    tr.style.display = !q || t.includes(q) ? "" : "none";
-  });
-});
+$("buscar-dedicatoria").addEventListener("input", filtrarMuro);
 
 cargarDatos();
 </script>

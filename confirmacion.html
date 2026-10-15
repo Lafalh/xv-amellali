@@ -215,6 +215,13 @@ header h1{ font-size:1.45rem !important; }
   .barra{ position:sticky; top:0; z-index:10; padding:10px 16px !important; box-shadow:0 8px 16px -14px rgba(91,58,65,.5); }
   .lista-invitados{ overflow:visible !important; padding:14px 16px 40px !important; }
 }
+
+.fila-filtros{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 14px; margin-top:9px; }
+.fila-filtros .filtros{ margin-top:0 !important; }
+.orden{ display:inline-flex; align-items:center; gap:8px; font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--rosa-viejo); }
+.orden select{ min-height:36px; padding:0 30px 0 12px; border-radius:999px; border:1px solid var(--pergamino-2); background:var(--blanco);
+               font-family:var(--texto); font-size:.85rem; color:var(--tinta); text-transform:none; letter-spacing:0; cursor:pointer; }
+@media (pointer:coarse){ .orden select{ min-height:44px; } }
 </style>
 </head>
 <body>
@@ -248,7 +255,16 @@ const CONFIG = {
 
 <div class="barra">
   <label class="buscador"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="search" id="buscar" placeholder="Buscar invitado o teléfono…" aria-label="Buscar invitado o teléfono"></label>
-  <div class="filtros" id="filtros"></div>
+  <div class="fila-filtros">
+    <div class="filtros" id="filtros"></div>
+    <label class="orden">Ordenar
+      <select id="orden" aria-label="Ordenar invitados">
+        <option value="nombre">Nombre (A-Z)</option>
+        <option value="recientes">Más recientes</option>
+        <option value="personas">Más personas</option>
+      </select>
+    </label>
+  </div>
 </div>
 
 <div id="estado" class="estado" role="status" aria-live="polite">Cargando...</div>
@@ -279,6 +295,13 @@ let invitados = [];
 let croquisActual = { mesas: [], asign: {}, grupos: [] };
 let busqueda = "";
 let filtro = "todos";
+let orden = "nombre";
+
+function formatearFecha(iso){
+  if (!iso) return "";
+  const d = new Date(iso);
+  return isNaN(d) ? "" : d.toLocaleDateString("es-MX", { day: "numeric", month: "short" });
+}
 
 function linkInvitado(id){
   const url = new URL(CONFIG.paginaInvitado, location.href);
@@ -326,6 +349,10 @@ function renderLista(){
   if (busqueda) lista = lista.filter(i => normalizar(i.nombre).includes(normalizar(busqueda)) || (i.telefono||"").includes(busqueda));
   if (filtro === "sinmesa") lista = lista.filter(i => sentados(i.id) < i.total);
   if (filtro === "duplicados") lista = lista.filter(i => cuenta[normalizar(i.nombre)] > 1);
+  lista = lista.slice().sort((a, b) =>
+    orden === "recientes" ? String(b.fecha || "").localeCompare(String(a.fecha || "")) :
+    orden === "personas"  ? (b.total - a.total) || a.nombre.localeCompare(b.nombre, "es") :
+                            a.nombre.localeCompare(b.nombre, "es"));
 
   if (!lista.length){ $("lista").innerHTML = `<p class="vacio">Sin resultados.</p>`; return; }
 
@@ -350,6 +377,7 @@ function renderLista(){
         </div>
         <div class="cont">${ICONOS.personas}<span><strong>${inv.total}</strong> persona${inv.total===1?"":"s"} · ${desglose}</span></div>
         ${inv.telefono ? `<div class="cont">${ICONOS.telefono}<span>${esc(inv.telefono)}</span></div>` : ""}
+        ${inv.fecha ? `<div class="cont">${ICONOS.calendario}<span>Confirmó el ${formatearFecha(inv.fecha)}</span></div>` : ""}
         ${inv.mensaje ? `<div class="mensaje-fila">«${esc(inv.mensaje)}»</div>` : ""}
         <div class="fi-mesas">${mesasHTML}</div>
         <div class="acciones-fila">
@@ -445,6 +473,8 @@ async function cargar(){
 }
 
 $("buscar").addEventListener("input", e => { busqueda = e.target.value; renderLista(); });
+$("orden").addEventListener("change", e => { orden = e.target.value; renderLista(); });
+ICONOS.calendario = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
 
 cargar();
 </script>

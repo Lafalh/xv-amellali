@@ -77,15 +77,15 @@ se ligaba por el texto del nombre):
 
 | Archivo | Qué es |
 |---|---|
-| `index.html` | Panel principal (solo organizadores): carrusel de dedicatorias + tabla de invitados con **WhatsApp / Adultos / Niños / Total**. |
+| `index.html` | Panel **Dedicatorias** (página principal, solo organizadores): **solo mensajes** — carrusel + muro con todas las dedicatorias y buscador. La lista de invitados ya NO está aquí. |
 | `croquis-mesas.html` | Acomodo de mesas (misma lógica que la boda, ver su CLAUDE.md), con la lista sincronizada de `Invitados`. La mesa principal se llama "Quinceañera" (su id interno sigue siendo `novios`). |
-| `confirmacion.html` | Panel **Invitados**: todos con su mesa, filtros (sin mesa / posibles duplicados), Vista previa, Copiar link, WhatsApp, Eliminar. |
+| `confirmacion.html` | Panel **Invitados** (la lista de invitados vive solo aquí): todos con su mesa, fecha en que confirmaron, totales de personas/adultos/niños, filtros (sin mesa / posibles duplicados), orden (A-Z, más recientes, más personas), Vista previa, Copiar link, WhatsApp, Eliminar. |
 | `mi-confirmacion.html` | Lo que ve cada invitado con su link (`?id=ID`; `?invitado=Nombre` sigue funcionando): su mesa, Misa y Recepción. |
 
 Mejoras de UI/UX (guías de la habilidad ui-ux-pro-max), bloque **"MEJORAS UX"** al final del
 `<style>` de cada panel: foco visible, objetivos táctiles ≥44px en celular, letras de apoyo ≥12px,
 spinner de carga con `aria-live`, avisos breves (toast) al copiar/eliminar, íconos SVG (no emoji).
-Por panel: dedicatorias con cifras en tarjetitas, buscador y la tabla convertida en tarjetas en celular;
+Por panel: dedicatorias con cifras en tarjetitas y muro de dedicatorias con buscador;
 Invitados con WhatsApp como acción principal, vista previa y eliminar como íconos (eliminar aparte, con
 confirmación), página que se desplaza normal en celular con buscador fijo; croquis con botones en una
 fila deslizable (Guardar primero); mi-confirmacion con el **número de mesa en grande** (medallón) y
