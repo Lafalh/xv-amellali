@@ -44,8 +44,14 @@ Todo es gratis y toma unos **20 minutos**. Solo se hace **una vez**.
    - **Token name:** `xv-amellali-fotos`
    - **Expiration:** *Custom* → una fecha después del evento (ej. **31 de diciembre de 2026**).
    - **Repository access:** *Only select repositories* → elige **`Lafalh/xv-amellali`**.
-   - **Permissions → Repository permissions → Contents:** **Read and write**.
-     (Metadata queda en *Read-only* solo; no muevas nada más.)
+   - **Permissions** → pestaña **Repositories** → botón **+ Add permissions** → marca **Contents**.
+     En la fila nueva **Contents**, cambia **Access** de *Read-only* a **Read and write**.
+     **Metadata** se queda en *Read-only* (GitHub lo pone solo). No agregues nada en la pestaña **Account**.
+
+     | Permiso | Access |
+     |---|---|
+     | Metadata | Read-only |
+     | **Contents** | **Read and write** |
 4. **Generate token** y **copia** el token (empieza con `github_pat_…`). GitHub solo lo muestra una vez.
 
 > ⚠️ El token es como una contraseña: **no lo pegues en ningún HTML ni lo mandes por WhatsApp**.
