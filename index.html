@@ -273,6 +273,7 @@ a, button, select, .chip, .pestana{ -webkit-tap-highlight-color:transparent; }
 .todas .vacio.oculto{ display:none; }
 </style>
 <script src="ajustes.js"></script>
+<script src="en-vivo.js"></script>
 </head>
 <body>
 
@@ -342,11 +343,17 @@ function escaparHTML(texto){
   return div.innerHTML;
 }
 
-async function cargarDatos(){
-  $("estado").innerHTML = '<span class="spinner" aria-hidden="true"></span>Cargando…';
-  $("cont-dedicatorias").innerHTML = "";
-  $("muro-dedicatorias").innerHTML = "";
-  $("resumen").innerHTML = "";
+/* silencioso = refresco automático: no borra la pantalla, solo repinta si
+   cambió algo, y conserva la dedicatoria que se está viendo en el carrusel. */
+let ultimaFirma = "", pedido = 0;
+async function cargarDatos(silencioso){
+  const mio = ++pedido;
+  if (!silencioso){
+    $("estado").innerHTML = '<span class="spinner" aria-hidden="true"></span>Cargando…';
+    $("cont-dedicatorias").innerHTML = "";
+    $("muro-dedicatorias").innerHTML = "";
+    $("resumen").innerHTML = "";
+  }
 
   if (!CONFIG.urlConfirmaciones || CONFIG.urlConfirmaciones.startsWith("PEGA_AQUI")) {
     $("estado").textContent = "Falta configurar la conexión: pega la URL /exec del Apps Script en ajustes.js (ver CONFIGURACION.md, paso 7).";
@@ -366,22 +373,30 @@ async function cargarDatos(){
   try {
     const url = `${CONFIG.urlConfirmaciones}?accion=invitados`;
     const resp = await fetch(url);
+    if (!resp.ok && silencioso) throw new Error("HTTP " + resp.status);
     if (!resp.ok) {
       $("estado").textContent = `El servidor respondió con un error (código ${resp.status}). Revisa que la URL de CONFIG.urlConfirmaciones sea exactamente la misma que en invitacion.html.`;
       return;
     }
     const datos = await resp.json();
+    if (mio !== pedido) return;   // llegó tarde: ya hay una consulta más nueva
 
+    if (!datos.ok && silencioso) throw new Error(datos.error || "respuesta inválida");
     if (!datos.ok) {
       $("estado").textContent = "No se pudieron cargar los datos: " + (datos.error || "error desconocido") + ".";
       return;
     }
 
     $("estado").textContent = "";
-    $("ultima-act").textContent = "Actualizado a las " + new Date().toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
+    if (vivo) vivo.marcar();
     // Cada invitado de la pestaña "Invitados" es una confirmación (se registran al confirmar)
-    pintarDatos((datos.invitados || []).map(i => Object.assign({}, i, { pases: i.total, asiste: "Sí" })));
+    const lista = (datos.invitados || []).map(i => Object.assign({}, i, { pases: i.total, asiste: "Sí" }));
+    const firma = JSON.stringify(lista);
+    if (silencioso && firma === ultimaFirma) return;   // nada nuevo
+    ultimaFirma = firma;
+    pintarDatos(lista, silencioso);
   } catch (err) {
+    if (silencioso) throw err;
     $("estado").innerHTML =
       "No se pudo conectar.<br><br>" +
       "<strong>Detalle técnico:</strong> " + escaparHTML(err.message) + "<br><br>" +
@@ -444,7 +459,8 @@ function indicesVentana(centro, total){
   return idxs;
 }
 
-function mostrarCarrusel(){
+let tecladoListo = false;
+function mostrarCarrusel(conservar){
   const cont = $("cont-dedicatorias");
 
   if (listaDedicatorias.length === 0) {
@@ -452,7 +468,7 @@ function mostrarCarrusel(){
     return;
   }
 
-  indiceActual = 0;
+  indiceActual = conservar ? Math.min(indiceActual, listaDedicatorias.length - 1) : 0;
   cont.innerHTML = `
     <div class="carrusel" id="carrusel-pista"></div>
     ${listaDedicatorias.length > 1 ? `
@@ -470,7 +486,7 @@ function mostrarCarrusel(){
     actualizarIndicador();
     $("btn-prev").addEventListener("click", () => cambiarCarta(-1));
     $("btn-next").addEventListener("click", () => cambiarCarta(1));
-    document.addEventListener("keydown", manejarTeclado);
+    if (!tecladoListo){ document.addEventListener("keydown", manejarTeclado); tecladoListo = true; }
   }
 }
 
@@ -525,7 +541,7 @@ function cambiarCarta(direccion){
   setTimeout(() => { pista.dataset.animando = "0"; }, 520);
 }
 
-function pintarDatos(confirmaciones){
+function pintarDatos(confirmaciones, conservar){
   const confirmados = confirmaciones.filter(c => c.asiste === "Sí");
   const conMensaje = confirmaciones.filter(c => c.mensaje && c.mensaje.trim());
 
@@ -537,7 +553,7 @@ function pintarDatos(confirmaciones){
   `;
 
   listaDedicatorias = conMensaje;
-  mostrarCarrusel();
+  mostrarCarrusel(conservar);
 
   // Muro con todas las dedicatorias completas, para leerlas sin pasar una por una
   $("seccion-todas").hidden = conMensaje.length === 0;
@@ -562,9 +578,14 @@ function filtrarMuro(){
   $("sin-resultados").classList.toggle("oculto", visibles > 0 || !q);
 }
 
-$("btn-actualizar").addEventListener("click", cargarDatos);
+$("btn-actualizar").addEventListener("click", () => cargarDatos(false));
 $("buscar-dedicatoria").addEventListener("input", filtrarMuro);
 
+// Refresco automático cada 20 s (se pausa con la pestaña oculta)
+let vivo = null;
+if (CONFIG.urlConfirmaciones && !CONFIG.urlConfirmaciones.startsWith("PEGA_AQUI") && location.protocol !== "file:"){
+  vivo = EnVivo.iniciar({ contenedor: $("ultima-act"), actualizar: () => cargarDatos(true), cada: 20 });
+}
 cargarDatos();
 </script>
 </body>

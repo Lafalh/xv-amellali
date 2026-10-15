@@ -115,6 +115,21 @@ Haz las pruebas en una **ventana de incógnito** (así tu celular no se queda "r
 - Foto de prueba: borra su fila en la pestaña **Fotos** y el archivo de la carpeta de Drive.
   La copia en el repo se borra en GitHub: rama `fotos` → carpeta `fotos/…` → archivo → ícono de bote.
 
+## Actualización: eliminar fotos desde el panel
+
+El panel **Fotos** ahora tiene un botón para eliminar cada foto. Para que funcione, el Apps Script
+necesita la versión nueva del código:
+
+1. Copia otra vez [google-apps-script.gs](https://github.com/Lafalh/xv-amellali/blob/main/google-apps-script.gs)
+   (**Copy raw file**), reemplaza todo el código del editor y **guarda**.
+2. **Implementar → Gestionar implementaciones → lápiz (App web) → Versión: Nueva versión → Implementar.**
+
+Al eliminar una foto, el original va a la **papelera de Google Drive** (se puede recuperar durante 30 días),
+la copia se quita de la rama `fotos` y en la pestaña **Fotos** la fila queda con **Estado = Eliminada**
+(si borras esa palabra, la foto vuelve a aparecer en el panel).
+
+Los paneles también se **actualizan solos cada 20 segundos** (indicador "En vivo"); ya no hace falta recargar.
+
 ## Si después cambias el código del Apps Script
 
 Guardar no basta. Ve a **Implementar → Gestionar implementaciones → lápiz (editar) → Versión: Nueva versión → Implementar**.

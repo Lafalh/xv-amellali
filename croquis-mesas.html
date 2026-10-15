@@ -269,8 +269,10 @@ header h1{ font-size:1.45rem !important; }
   .acciones{ flex-wrap:nowrap !important; overflow-x:auto; width:100%; padding-bottom:4px; scrollbar-width:none; }
   .acciones::-webkit-scrollbar{ display:none; }
 }
+.vivo-cont{ margin-top:6px; }
 </style>
 <script src="ajustes.js"></script>
+<script src="en-vivo.js"></script>
 </head>
 <body>
 
@@ -294,6 +296,7 @@ const CONFIG = {
   <div>
     <p class="sub">Panel privado</p>
     <h1>Croquis de mesas</h1>
+    <div id="vivo-cont" class="vivo-cont"></div>
   </div>
   <div class="acciones">
     <button class="boton" id="btn-organizar" title="Mover mesas de lugar en el plano"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Organizar mesas</button>
@@ -1311,6 +1314,28 @@ window.addEventListener("keydown", e=>{
 });
 window.addEventListener("beforeunload", e=>{ if(sucio){ e.preventDefault(); e.returnValue=""; } });
 
+/* Refresco automático de la LISTA de invitados (cada 20 s). Las mesas y el
+   acomodo que estás haciendo NO se recargan (no se pierden cambios sin
+   guardar): solo aparecen los invitados nuevos, se actualiza cuántas
+   personas trae cada quien y se liberan lugares de los eliminados.
+   Se pausa mientras arrastras o estás en "Organizar mesas". */
+let firmaInvitados = "", pedidoInv = 0;
+async function refrescarInvitados(){
+  if (!estado) return;
+  const mio = ++pedidoInv;
+  const r = await fetch(CONFIG.urlConfirmaciones + "?accion=invitados");
+  const d = await r.json();
+  if (mio !== pedidoInv || arrastre || modoOrganizar) return;   // respuesta vieja, o empezaste a mover algo mientras llegaba
+  if (!d.ok) throw new Error(d.error || "lista inválida");
+  const firma = JSON.stringify(d.invitados);
+  if (firma === firmaInvitados) return;
+  firmaInvitados = firma;
+  sincronizarConInvitados(d.invitados);
+  render();
+}
+if (CONFIG.urlConfirmaciones && !CONFIG.urlConfirmaciones.startsWith("PEGA_AQUI") && location.protocol !== "file:"){
+  EnVivo.iniciar({ contenedor: $("vivo-cont"), actualizar: refrescarInvitados, pausar: () => !!arrastre || modoOrganizar, cada: 20 });
+}
 cargar();
 </script>
 </body>

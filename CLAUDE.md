@@ -52,6 +52,7 @@ misma estructura, mismo bloque `CONFIG`, mismo backend de Apps Script.
 | `invitacion-marco.html` | Diseño 1 (se conserva): portada con marco ovalado, tarjetas, esquineros. |
 | `invitacion-victoriana.html` | Diseño 2 (se conserva): estilo de https://eventday.ar/cumple/modelo-victorian/ — sobre con sello, filigranas, grabados, línea de tiempo. |
 | `ajustes.js` | **Único lugar donde se pega la URL `/exec` del Apps Script** (`window.AJUSTES.urlAppsScript`); lo cargan las 9 páginas. |
+| `en-vivo.js` | **Refresco automático** de los paneles (Dedicatorias, Invitados, Fotos y la lista del croquis) cada 20 s, con indicador "En vivo". Se pausa con la pestaña oculta, con el visor de fotos abierto o al arrastrar / organizar mesas en el croquis. Cada panel recarga en modo *silencioso* (no borra la pantalla, solo repinta si cambió la firma de los datos, conserva búsqueda/filtro/orden/carrusel) y descarta respuestas que llegan tarde (contador `pedido`). En el croquis solo se refresca la lista de invitados: el acomodo sin guardar no se toca. |
 | `CONFIGURACION.md` | Guía paso a paso para configurar Google (hoja, Apps Script, token de GitHub, pruebas, problemas comunes). |
 | `google-apps-script.gs` | Backend. Pestaña **`Invitados`** (se crea sola): `ID \| Fecha \| Nombre \| Teléfono \| Adultos \| Niños \| Total \| Mensaje \| Estado \| Actualizado`. Pestaña `Croquis` (JSON). |
 
@@ -92,6 +93,7 @@ se ligaba por el texto del nombre):
 - Panel **`fotos.html`** (organizadores): galería desde la copia del repo
   (`raw.githubusercontent.com/<repo>/fotos/...`), filtro por quién subió, visor, link al original en
   Drive, botón a la carpeta y **"Imprimir QR para las mesas"** (tarjeta lista para imprimir).
+- **Eliminar fotos** desde el panel (bote en cada foto y en el visor, con confirmación): `POST {accion:"eliminarFoto", clave}` → original a la **papelera de Drive** (30 días), copia quitada de la rama `fotos` con un commit (Git Data API; sigue en el historial) y la fila marcada **Estado = Eliminada** (columna 9 de la pestaña `Fotos`).
 - Ojo: el repo es **público**, así que las copias comprimidas se pueden ver con el link directo.
 
 ### Paneles de administración (copiados de la boda y adaptados)

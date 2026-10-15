@@ -66,7 +66,9 @@
  *   GET  ?prueba=1         → agrega un invitado de prueba
  *   POST {accion:"subirFoto", destino:"drive"|"repo", clave, tipo, datos(base64), nombreArchivo, autor, idInvitado}
  *        → guarda la foto (ver sección FOTOS: requiere GITHUB_TOKEN)
- *   GET  ?accion=fotos     → fotos subidas + link de la carpeta de Drive
+ *   POST {accion:"eliminarFoto", clave} → original a la papelera de Drive, quita
+ *        la copia del repo y marca la fila como "Eliminada"
+ *   GET  ?accion=fotos     → fotos subidas (sin eliminadas) + link de la carpeta de Drive
  */
 
 const HOJA_INVITADOS = "Invitados";
@@ -81,6 +83,7 @@ function doPost(e) {
   const datos = JSON.parse(e.postData.contents);
 
   if (datos.accion === "subirFoto") return responderJSON(subirFoto(datos));
+  if (datos.accion === "eliminarFoto") return responderJSON(eliminarFoto(datos.clave));
   if (datos.accion === "guardarCroquis") return responderJSON(guardarCroquis(datos.croquis));
   if (datos.accion === "eliminarInvitado") return responderJSON(cambiarEstado(datos.id, "Eliminado"));
 
@@ -279,7 +282,7 @@ function guardarCroquis(croquis) {
    para conectarse a servicios externos (GitHub): hay que aceptarlo.
    ============================================================ */
 const HOJA_FOTOS = "Fotos";
-const ENC_FOTOS = ["Fecha", "Clave", "Autor", "ID invitado", "Tipo", "Archivo", "Drive", "Repo"];
+const ENC_FOTOS = ["Fecha", "Clave", "Autor", "ID invitado", "Tipo", "Archivo", "Drive", "Repo", "Estado"];
 const MAX_BASE64 = 45 * 1024 * 1024;   // ~33 MB reales (el límite de Apps Script ronda 50 MB)
 const REPO_DEFAULT = "Lafalh/xv-amellali";
 
@@ -307,6 +310,8 @@ function hojaFotos() {
     hoja = libro.insertSheet(HOJA_FOTOS);
     hoja.getRange(1, 1, 1, ENC_FOTOS.length).setValues([ENC_FOTOS]).setFontWeight("bold");
     hoja.setFrozenRows(1);
+  } else if (!hoja.getRange(1, 9).getValue()) {
+    hoja.getRange(1, 9).setValue("Estado").setFontWeight("bold");   // hojas creadas antes de esta columna
   }
   return hoja;
 }
@@ -359,11 +364,80 @@ function anotarFoto(f) {
 
 function leerFotos() {
   const hoja = hojaFotos();
-  return hoja.getDataRange().getValues().slice(1).filter(r => r[1]).map(r => ({
+  return hoja.getDataRange().getValues().slice(1).filter(r => r[1] && String(r[8] || "") !== "Eliminada").map(r => ({
     fecha: r[0] instanceof Date ? r[0].toISOString() : String(r[0] || ""),
     clave: String(r[1]), autor: String(r[2] || ""), idInvitado: String(r[3] || ""),
     tipo: String(r[4] || ""), archivo: String(r[5] || ""), drive: String(r[6] || ""), repo: String(r[7] || "")
   })).reverse();
+}
+
+/** Eliminar desde el panel fotos.html. No es borrado definitivo: el original
+    queda 30 días en la papelera de Drive y la copia queda en el historial
+    del repositorio; la fila se marca "Eliminada" (se puede volver a dejar
+    vacía para que reaparezca). */
+function eliminarFoto(clave) {
+  clave = String(clave || "");
+  const hoja = hojaFotos();
+  const claves = hoja.getRange(1, 2, Math.max(hoja.getLastRow(), 1), 1).getValues().map(r => String(r[0]));
+  const fila = claves.indexOf(clave) + 1;
+  if (fila < 2) return { ok: false, error: "No existe esa foto" };
+  const datos = hoja.getRange(fila, 1, 1, 9).getValues()[0];
+  const avisos = [];
+
+  // 1) original a la papelera de Drive
+  const idDrive = (String(datos[6] || "").match(/\/d\/([\w-]+)/) || [])[1];
+  if (idDrive) {
+    try { DriveApp.getFileById(idDrive).setTrashed(true); }
+    catch (e) { avisos.push("Drive: " + e.message); }
+  }
+  // 2) copia del repositorio
+  const ruta = String(datos[7] || "");
+  if (ruta) {
+    try { quitarDeGitHub(ruta, clave); }
+    catch (e) { avisos.push("GitHub: " + e.message); }
+  }
+  hoja.getRange(fila, 9).setValue("Eliminada");
+  return { ok: true, avisos: avisos };
+}
+
+/* Quita el archivo de la rama con un commit nuevo (Git Data API: solo usa
+   GET/POST/PATCH, que UrlFetchApp manda sin problema). El archivo sigue en
+   el historial del repositorio. */
+function quitarDeGitHub(ruta, clave) {
+  const token = prop("GITHUB_TOKEN", "");
+  if (!token) throw new Error("Falta GITHUB_TOKEN");
+  const repo = prop("GITHUB_REPO", REPO_DEFAULT);
+  const rama = prop("GITHUB_RAMA", "fotos");
+  const base = "/repos/" + repo + "/git";
+  const candado = LockService.getScriptLock();
+  candado.waitLock(30000);
+  try {
+    const existe = gh("GET", "/repos/" + repo + "/contents/" + ruta + "?ref=" + rama, token);
+    if (existe.codigo === 404) return;   // ya no estaba
+    if (existe.codigo !== 200) throw new Error("respondió " + existe.codigo);
+    for (let intento = 0; intento < 3; intento++) {
+      const ref = gh("GET", base + "/ref/heads/" + rama, token);
+      if (ref.codigo !== 200) throw new Error("no se pudo leer la rama (" + ref.codigo + ")");
+      const padre = ref.json.object.sha;
+      const commit = gh("GET", base + "/commits/" + padre, token);
+      const arbol = gh("POST", base + "/trees", token, {
+        base_tree: commit.json.tree.sha,
+        tree: [{ path: ruta, mode: "100644", type: "blob", sha: null }]
+      });
+      if (arbol.codigo !== 201) throw new Error("no se pudo armar el cambio (" + arbol.codigo + ")");
+      const nuevo = gh("POST", base + "/commits", token, {
+        message: "Eliminar foto " + clave + " (desde el panel)", tree: arbol.json.sha, parents: [padre]
+      });
+      if (nuevo.codigo !== 201) throw new Error("no se pudo crear el commit (" + nuevo.codigo + ")");
+      const mover = gh("PATCH", base + "/refs/heads/" + rama, token, { sha: nuevo.json.sha });
+      if (mover.codigo === 200) return;
+      if (mover.codigo !== 422) throw new Error("no se pudo actualizar la rama (" + mover.codigo + ")");
+      Utilities.sleep(800 * (intento + 1));   // otra foto entró al mismo tiempo: reintentar
+    }
+    throw new Error("GitHub estuvo ocupado");
+  } finally {
+    candado.releaseLock();
+  }
 }
 
 /* ---------- GitHub ---------- */
