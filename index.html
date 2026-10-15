@@ -272,6 +272,7 @@ a, button, select, .chip, .pestana{ -webkit-tap-highlight-color:transparent; }
 .nota figcaption span{ display:block; margin-top:2px; font-family:var(--texto); font-style:normal; font-size:.72rem; letter-spacing:.05em; color:var(--rosa-viejo); }
 .todas .vacio.oculto{ display:none; }
 </style>
+<script src="ajustes.js"></script>
 </head>
 <body>
 
@@ -290,7 +291,7 @@ const CONFIG = {
   nombreQuinceanera: "Amellali",
   // La misma URL de Google Apps Script que en invitacion.html
   // (CONFIG.urlConfirmaciones), terminada en /exec.
-  urlConfirmaciones: "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT"
+  urlConfirmaciones: (window.AJUSTES && AJUSTES.urlAppsScript) || "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT"   // se pega en ajustes.js
 };
 </script>
 
@@ -348,7 +349,7 @@ async function cargarDatos(){
   $("resumen").innerHTML = "";
 
   if (!CONFIG.urlConfirmaciones || CONFIG.urlConfirmaciones.startsWith("PEGA_AQUI")) {
-    $("estado").textContent = "Falta configurar CONFIG.urlConfirmaciones en este archivo (la misma URL que usaste en invitacion.html).";
+    $("estado").textContent = "Falta configurar la conexión: pega la URL /exec del Apps Script en ajustes.js (ver CONFIGURACION.md, paso 7).";
     return;
   }
 

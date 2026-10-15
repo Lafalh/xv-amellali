@@ -270,13 +270,14 @@ header h1{ font-size:1.45rem !important; }
   .acciones::-webkit-scrollbar{ display:none; }
 }
 </style>
+<script src="ajustes.js"></script>
 </head>
 <body>
 
 <script>
 const CONFIG = {
   // Misma URL de Google Apps Script que en invitacion.html e index.html
-  urlConfirmaciones: "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT",
+  urlConfirmaciones: (window.AJUSTES && AJUSTES.urlAppsScript) || "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT",   // se pega en ajustes.js
   capacidadMesa: 10,      // cupo normal
   excedentePermitido: 1   // una silla extra por mesa => 11
 };
@@ -492,7 +493,7 @@ function agregarInvitadoManual(){
 
 async function guardar(){
   if(!CONFIG.urlConfirmaciones || CONFIG.urlConfirmaciones.startsWith("PEGA_AQUI")){
-    avisar("Falta configurar la URL para poder guardar"); return;
+    avisar("Falta pegar la URL del Apps Script en ajustes.js para poder guardar"); return;
   }
   $("btn-guardar").disabled = true;
   try{

@@ -223,6 +223,7 @@ header h1{ font-size:1.45rem !important; }
                font-family:var(--texto); font-size:.85rem; color:var(--tinta); text-transform:none; letter-spacing:0; cursor:pointer; }
 @media (pointer:coarse){ .orden select{ min-height:44px; } }
 </style>
+<script src="ajustes.js"></script>
 </head>
 <body>
 
@@ -235,7 +236,7 @@ header h1{ font-size:1.45rem !important; }
 
 <script>
 const CONFIG = {
-  urlConfirmaciones: "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT",
+  urlConfirmaciones: (window.AJUSTES && AJUSTES.urlAppsScript) || "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT",   // se pega en ajustes.js
   nombreQuinceanera: "Amellali",
   // Nombre del archivo con la página personalizada de cada invitado.
   paginaInvitado: "mi-confirmacion.html"
@@ -435,7 +436,7 @@ async function cargar(){
   $("resumen").innerHTML = "";
 
   if (!CONFIG.urlConfirmaciones || CONFIG.urlConfirmaciones.startsWith("PEGA_AQUI")){
-    $("estado").textContent = "Falta configurar CONFIG.urlConfirmaciones en este archivo (la misma URL /exec que en invitacion.html).";
+    $("estado").textContent = "Falta configurar la conexión: pega la URL /exec del Apps Script en ajustes.js (ver CONFIGURACION.md, paso 7).";
     return;
   }
   if (location.protocol === "file:"){

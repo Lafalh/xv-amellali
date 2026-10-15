@@ -51,6 +51,8 @@ misma estructura, mismo bloque `CONFIG`, mismo backend de Apps Script.
 | `invitacion.html` | **La que se entrega: versión combinada** de los dos diseños. |
 | `invitacion-marco.html` | Diseño 1 (se conserva): portada con marco ovalado, tarjetas, esquineros. |
 | `invitacion-victoriana.html` | Diseño 2 (se conserva): estilo de https://eventday.ar/cumple/modelo-victorian/ — sobre con sello, filigranas, grabados, línea de tiempo. |
+| `ajustes.js` | **Único lugar donde se pega la URL `/exec` del Apps Script** (`window.AJUSTES.urlAppsScript`); lo cargan las 9 páginas. |
+| `CONFIGURACION.md` | Guía paso a paso para configurar Google (hoja, Apps Script, token de GitHub, pruebas, problemas comunes). |
 | `google-apps-script.gs` | Backend. Pestaña **`Invitados`** (se crea sola): `ID \| Fecha \| Nombre \| Teléfono \| Adultos \| Niños \| Total \| Mensaje \| Estado \| Actualizado`. Pestaña `Croquis` (JSON). |
 
 ## Lista de invitados: una sola, ligada por ID
@@ -151,13 +153,11 @@ Ornamentos generados en JS como SVG: `SVG_MARCO`, `SVG_FILIGRANA`, `DAMASCO`, `E
 
 ## Pendiente
 
-- Crear hoja de Google (vacía: la pestaña `Invitados` se crea sola) + desplegar `google-apps-script.gs` y pegar
-  la URL `/exec` en `CONFIG.urlConfirmaciones` de los tres HTML (hoy es un placeholder: el
-  formulario "confirma" pero no guarda nada).
-- La URL `/exec` también va en `CONFIG.urlConfirmaciones` de `index.html`, `croquis-mesas.html`,
-  `confirmacion.html` y `mi-confirmacion.html`.
+- **Configurar Google**: seguir `CONFIGURACION.md` (hoja nueva, Apps Script, token de GitHub en
+  Propiedades del script, implementar como app web). La URL `/exec` se pega **solo en `ajustes.js`**
+  (todas las páginas la leen de `window.AJUSTES.urlAppsScript`). Mientras siga el placeholder, el
+  formulario "confirma" pero no guarda nada.
 - El croquis trae el **plano del salón de la boda** (36 mesas redondas de 10 + Quinceañera, Pastel,
   Dulces, pista). Hay que ajustarlo al Auditorio Ejidal Ayotla cuando se sepa el acomodo real.
 - Confirmar con la clienta la hora de la misa: el mensaje dice 14:45 y el programa 15:00.
 - Galería de la invitación apagada (`mostrarGaleria`). Subir fotos ya está activa.
-- Crear el `GITHUB_TOKEN` (fine-grained, solo el repo xv-amellali, Contents: Read and write) y ponerlo en las Propiedades del script; poner la URL `/exec` también en `subir-fotos.html` y `fotos.html`.

@@ -36,10 +36,11 @@
  * 3. Implementar > Nueva implementación > Aplicación web:
  *      - Ejecutar como: "Yo"
  *      - Quién tiene acceso: "Cualquier usuario"   <-- IMPRESCINDIBLE
- * 4. Copia la URL que te da (termina en /exec) y pégala en
- *    CONFIG.urlConfirmaciones de TODOS los HTML: invitacion.html,
- *    invitacion-marco.html, invitacion-victoriana.html, index.html,
- *    croquis-mesas.html, confirmacion.html y mi-confirmacion.html.
+ * 4. Copia la URL que te da (termina en /exec) y pégala en ajustes.js
+ *    (es el único lugar; todas las páginas la leen de ahí).
+ *
+ * Guía completa paso a paso (con el token de GitHub para las fotos):
+ * CONFIGURACION.md en el repositorio.
  *
  * ⚠️ Cada vez que edites este script, ve a Implementar > Gestionar
  * implementaciones > lápiz > Versión: "Nueva versión" > Implementar.

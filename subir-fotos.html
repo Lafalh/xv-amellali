@@ -102,6 +102,7 @@ input[type=file]{ position:absolute; width:1px; height:1px; opacity:0; pointer-e
 .oculto{ display:none !important; }
 @media (prefers-reduced-motion: reduce){ *{ animation-duration:.01ms !important; transition-duration:.01ms !important; } }
 </style>
+<script src="ajustes.js"></script>
 </head>
 <body>
 
@@ -109,7 +110,7 @@ input[type=file]{ position:absolute; width:1px; height:1px; opacity:0; pointer-e
 const CONFIG = {
   nombreQuinceanera: "Amellali",
   // La misma URL /exec del Apps Script que en invitacion.html
-  urlConfirmaciones: "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT",
+  urlConfirmaciones: (window.AJUSTES && AJUSTES.urlAppsScript) || "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT",   // se pega en ajustes.js
   maxMB: 30,            // tamaño máximo por archivo (límite del Apps Script)
   ladoMaxRepo: 1600,    // px del lado largo de la copia que va al repositorio
   calidadRepo: 0.82

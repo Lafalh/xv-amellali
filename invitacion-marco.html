@@ -426,6 +426,7 @@ a.qr-caja{ display:inline-block; text-decoration:none; transition:transform .2s 
 a.qr-caja:hover{ transform:translateY(-2px); }
 .qr-pista{ display:block; font-family:"Jost", sans-serif; font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; margin-top:8px; opacity:.8; }
 </style>
+<script src="ajustes.js"></script>
 </head>
 <body class="cerrada">
 
@@ -687,7 +688,7 @@ const CONFIG = {
 
   // URL /exec del Google Apps Script (ver google-apps-script.gs). Hay que
   // crear una hoja nueva para este evento y pegar aquí su URL.
-  urlConfirmaciones: "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT",
+  urlConfirmaciones: (window.AJUSTES && AJUSTES.urlAppsScript) || "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT",   // se pega en ajustes.js
 
   // Música de fondo (opcional). Deja "" para no mostrar el botón de música.
   musicaURL: "",
