@@ -164,6 +164,13 @@ Ornamentos generados en JS como SVG: `SVG_MARCO`, `SVG_FILIGRANA`, `DAMASCO`, `E
 - Para regenerar: servidor local en 8765 (`.claude/launch.json`) y `python _tutorial/hacer_video.py`
   (o `cuadros 05 06`, `voz`, `armar`). FFmpeg está instalado con winget (Gyan.FFmpeg).
 
+**Video corto (el que pidió la clienta):** `tutorial/Tutorial-rapido-XV-Amellali.mp4` (1:29, sin voz,
+16.9 MB) y `-WhatsApp.mp4` (720×1280, 7 MB). Partes: Comparte → Así confirman → Lista de invitados →
+Dedicatorias → Fotos → En vivo (sin croquis). Se hace en `_tutorial/corto/`: `pantallas.js` (capturas del
+celular), `textos.json` (letreros), `musica.py` (vals de caja musical **original**, libre de derechos,
+sincronizado con las partes) y `video_corto.py capturas | video | muestra 12.5 30` (PIL compone cuadros
+→ FFmpeg). Necesita el servidor local en 8765.
+
 ## Pendiente
 
 - **Configurar Google**: seguir `CONFIGURACION.md` (hoja nueva, Apps Script, token de GitHub en
