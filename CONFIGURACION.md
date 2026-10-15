@@ -141,7 +141,7 @@ La URL `/exec` **no cambia**, así que `ajustes.js` se queda igual.
 | Lo que ves | Qué revisar |
 |---|---|
 | "Falta configurar CONFIG.urlConfirmaciones…" | `ajustes.js` todavía tiene `PEGA_AQUI…`, o GitHub aún no se actualiza: espera 2 minutos y recarga. |
-| "No se pudo conectar" o te pide iniciar sesión | En la implementación, **Quién tiene acceso** debe ser **Cualquier usuario**; y después de cambiar el script, publicar **Nueva versión**. |
+| "No se pudo conectar" o te pide iniciar sesión (abrir la URL `/exec` da **403 / Prohibido** o una página de Google para entrar) | En **Implementar → Gestionar implementaciones → lápiz**, **Quién tiene acceso** debe ser exactamente **"Cualquier usuario"** — **no** "Solo yo" ni "Cualquier usuario con una cuenta de Google". Elige **Versión: Nueva versión** → Implementar (la URL no cambia). Si la opción "Cualquier usuario" no aparece, la cuenta es de empresa/escuela (Google Workspace) con eso bloqueado: usa una cuenta @gmail.com. |
 | La invitación dice "confirmado" pero no llega a la hoja | Lo mismo de arriba. Prueba `…/exec?prueba=1`. |
 | Las fotos llegan a Drive pero no salen miniaturas en el panel | Falta o venció `GITHUB_TOKEN`, o no tiene **Contents: Read and write** sobre `xv-amellali`. Las fotos ya están a salvo en Drive. |
 | Un video no sube ("Pesa más de 30 MB") | Es el límite de Google. Pídele al invitado que te lo mande por WhatsApp. |
