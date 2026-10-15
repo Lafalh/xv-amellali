@@ -7,5 +7,5 @@
    el cambio a GitHub. Ver CONFIGURACION.md, paso 6.
    ================================================================ */
 window.AJUSTES = {
-  urlAppsScript: "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT"
+  urlAppsScript: "https://script.google.com/macros/s/AKfycbzcivW6tTQuRjfGpDGH6TAEl5IxyVSimis-B1RJBryqWUG6tIrtudtCFgvTM8iGWIN4/exec"
 };
