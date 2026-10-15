@@ -153,6 +153,17 @@ de la de marco; títulos Cinzel Decorative y grabados en todas las secciones.
 Ornamentos generados en JS como SVG: `SVG_MARCO`, `SVG_FILIGRANA`, `DAMASCO`, `ESQUINA`,
 `ROSA`, `CORONA`, `JOYA`, `GRABADOS` (libro, iglesia, candelabro, reloj, rosa, abanico, tintero).
 
+## Video tutorial para la clienta
+
+- `tutorial/Tutorial-XV-Amellali.mp4` (1080×1920, 4:23 min, 33 MB) y
+  `tutorial/Tutorial-XV-Amellali-WhatsApp.mp4` (720×1280, 10 MB). No se suben al repo (`.gitignore`).
+- Se genera con `_tutorial/` (tampoco se sube): `escenas.js` (guion: voz, subtítulo, página, acción,
+  elemento a resaltar, con **datos de ejemplo** — no toca la hoja real), `cuadro.html` (dibuja un cuadro
+  1080×1920 con un celular que muestra la página real) y `hacer_video.py` (Edge sin ventana toma los
+  cuadros → voz de Windows "Microsoft Sabina Desktop" → FFmpeg arma el MP4).
+- Para regenerar: servidor local en 8765 (`.claude/launch.json`) y `python _tutorial/hacer_video.py`
+  (o `cuadros 05 06`, `voz`, `armar`). FFmpeg está instalado con winget (Gyan.FFmpeg).
+
 ## Pendiente
 
 - **Configurar Google**: seguir `CONFIGURACION.md` (hoja nueva, Apps Script, token de GitHub en

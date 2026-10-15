@@ -10,3 +10,7 @@ Desktop.ini
 
 # Python
 __pycache__/
+
+# Herramienta para generar el video tutorial (no se publica)
+_tutorial/
+tutorial/
